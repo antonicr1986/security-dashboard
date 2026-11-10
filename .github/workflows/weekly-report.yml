@@ -1,0 +1,32 @@
+name: Weekly security report
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # lunes, 06:17 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # solo para guardar REPORT.md y data/ en este repo
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Generar informe y aplicar el quality gate
+        env:
+          # PAT de solo lectura con acceso a los repos de config.json (ver README)
+          GH_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
+        run: python3 -m dashboard --fail-on-gate
+
+      # Se guarda el informe aunque el gate falle: el informe es justo lo que hay que mirar
+      - name: Guardar el informe
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add REPORT.md data
+          git diff --staged --quiet || git commit -m "chore: update weekly security report"
+          git push

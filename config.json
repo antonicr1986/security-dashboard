@@ -1,0 +1,14 @@
+{
+  "repos": [
+    "antonicr1986/FinanceTracker",
+    "antonicr1986/financetracker-web",
+    "antonicr1986/financetracker-android",
+    "antonicr1986/financetracker-desktop",
+    "antonicr1986/antonio-cv"
+  ],
+  "gate": {
+    "critical": 0,
+    "high": 0,
+    "secrets": 0
+  }
+}
