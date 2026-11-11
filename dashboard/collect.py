@@ -53,6 +53,8 @@ def collect_repo(client, name):
         client.get_json(f"/repos/{name}/contents/.github/{file}") is not None
         for file in ("dependabot.yml", "dependabot.yaml")
     )
-    setup = client.get_json(f"/repos/{name}/code-scanning/default-setup") or {}
-    controls = detect_controls(texts, has_dependabot, setup.get("state") == "configured")
+    # CodeQL cuenta si el repo tiene algún análisis suyo (vale para la configuración
+    # por defecto y para un workflow propio, y solo necesita leer code scanning).
+    codeql = client.get_json(f"/repos/{name}/code-scanning/analyses?tool_name=CodeQL&per_page=1")
+    controls = detect_controls(texts, has_dependabot, has_codeql_analysis=bool(codeql))
     return RepoData(name, alerts, controls)

@@ -85,8 +85,8 @@ class ControlTests(unittest.TestCase):
             found, {"SAST": True, "SCA": False, "Secretos": True, "Contenedores/IaC": False, "DAST": True}
         )
 
-    def test_dependabot_file_and_codeql_default_setup_count(self):
-        found = detect_controls([], has_dependabot=True, codeql_default_setup=True)
+    def test_dependabot_file_and_codeql_analysis_count(self):
+        found = detect_controls([], has_dependabot=True, has_codeql_analysis=True)
         self.assertTrue(found["SCA"])
         self.assertTrue(found["SAST"])
 

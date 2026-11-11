@@ -97,12 +97,12 @@ def oldest_open_days(alerts, now):
     return max(ages) if ages else None
 
 
-def detect_controls(workflow_texts, has_dependabot, codeql_default_setup=False):
+def detect_controls(workflow_texts, has_dependabot, has_codeql_analysis=False):
     """Qué controles de seguridad tiene un repo, según sus workflows y su configuración."""
     text = "\n".join(workflow_texts).lower()
     found = {name: any(p in text for p in patterns) for name, patterns in CONTROLS.items()}
     found["SCA"] = found["SCA"] or has_dependabot
-    found["SAST"] = found["SAST"] or codeql_default_setup
+    found["SAST"] = found["SAST"] or has_codeql_analysis
     return found
 
 

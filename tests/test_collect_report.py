@@ -57,6 +57,16 @@ class CollectTests(unittest.TestCase):
         self.assertTrue(repo.controls["Contenedores/IaC"])
         self.assertTrue(repo.controls["SCA"])
         self.assertFalse(repo.controls["DAST"])
+        self.assertFalse(repo.controls["SAST"])
+
+    def test_codeql_analysis_counts_as_sast(self):
+        client = FakeClient(
+            {
+                "/repos/o/r": {"name": "r"},
+                "/repos/o/r/code-scanning/analyses?tool_name=CodeQL&per_page=1": [{"tool": {"name": "CodeQL"}}],
+            }
+        )
+        self.assertTrue(collect_repo(client, "o/r").controls["SAST"])
 
     def test_unreadable_repo_fails_instead_of_reporting_zero(self):
         with self.assertRaises(RuntimeError):
