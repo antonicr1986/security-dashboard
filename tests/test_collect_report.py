@@ -149,3 +149,33 @@ class ConfigEntryTests(unittest.TestCase):
     def test_unknown_control_name_is_rejected(self):
         with self.assertRaises(ValueError):
             collect_configured_repo(self.client, {"name": "o/r", "not_applicable": ["Dast"]})
+
+
+class PrivateRepoTests(unittest.TestCase):
+    def test_private_repo_without_code_scanning_marks_sast_as_accepted_risk(self):
+        repo = collect_repo(FakeClient({"/repos/o/r": {"private": True}}), "o/r")
+        self.assertEqual(repo.controls["SAST"], "private")
+
+    def test_public_repo_without_codeql_stays_red(self):
+        repo = collect_repo(FakeClient({"/repos/o/r": {"private": False}}), "o/r")
+        self.assertFalse(repo.controls["SAST"])
+
+    def test_private_repo_with_codeql_is_green(self):
+        client = FakeClient(
+            {
+                "/repos/o/r": {"private": True},
+                "/repos/o/r/code-scanning/alerts": [],
+                "/repos/o/r/code-scanning/analyses?tool_name=CodeQL&per_page=1": [{"tool": {"name": "CodeQL"}}],
+            }
+        )
+        self.assertTrue(collect_repo(client, "o/r").controls["SAST"])
+
+    def test_accepted_risk_is_shown_apart_and_left_out_of_coverage(self):
+        cv = RepoData("o/cv", {}, {"SAST": "private", "SCA": True, "Secretos": True, "Contenedores/IaC": None, "DAST": True})
+        summary = build_summary([cv], {}, NOW)
+        self.assertEqual(summary["totals"]["control_coverage_pct"], 100)
+        self.assertIsNone(summary["totals"]["coverage_by_control"]["SAST"])
+        markdown = render_markdown(summary, [])
+        self.assertIn("| o/cv | 🔒 | ✅ | ✅ | N/A | ✅ |", markdown)
+        self.assertIn("## Riesgos aceptados", markdown)
+        self.assertIn("- o/cv: SAST", markdown)

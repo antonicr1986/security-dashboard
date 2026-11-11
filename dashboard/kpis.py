@@ -8,6 +8,11 @@ from datetime import datetime
 SEVERITIES = ("critical", "high", "medium", "low")
 SECRET_SOURCE = "secret-scanning"
 
+# Valor de un control que el repo no puede tener por ser privado (CodeQL en un repo
+# privado requiere licencia de GitHub Advanced Security). Es un riesgo aceptado:
+# no cuenta en la cobertura, pero el informe lo muestra aparte.
+PRIVATE = "private"
+
 # Reglas de CodeQL sin nivel de seguridad: se aproximan con su gravedad de lint.
 _FALLBACK_SEVERITY = {"error": "high", "warning": "medium", "note": "low"}
 

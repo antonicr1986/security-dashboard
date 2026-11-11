@@ -1,6 +1,7 @@
 """Resumen de KPIs, histórico semanal e informe en Markdown."""
 from .kpis import (
     CONTROLS,
+    PRIVATE,
     SECRET_SOURCE,
     evaluate_gate,
     mttr_days,
@@ -22,8 +23,9 @@ def build_summary(repos, limits, now):
     secrets = open_secrets(alerts)
     mttr, closed = mttr_days(alerts)
 
-    # None = el control no aplica a ese repo: no cuenta ni a favor ni en contra.
-    checks = [value for repo in repos for value in repo.controls.values() if value is not None]
+    # Solo cuentan los controles exigibles (True/False). None = no aplica; PRIVATE = riesgo
+    # aceptado por ser repo privado. Ninguno de los dos suma ni resta.
+    checks = [value for repo in repos for value in repo.controls.values() if isinstance(value, bool)]
     coverage = round(100 * sum(checks) / len(checks)) if checks else 0
     by_control = {control: _percentage([repo.controls[control] for repo in repos]) for control in CONTROLS}
 
@@ -53,7 +55,7 @@ def build_summary(repos, limits, now):
 
 
 def _percentage(values):
-    applicable = [value for value in values if value is not None]
+    applicable = [value for value in values if isinstance(value, bool)]
     return round(100 * sum(applicable) / len(applicable)) if applicable else None
 
 
@@ -76,6 +78,8 @@ def update_history(history, new_snapshot, keep=52):
 def _mark(value):
     if value is None:
         return "N/A"
+    if value == PRIVATE:
+        return "🔒"
     return "✅" if value else "❌"
 
 
@@ -137,6 +141,18 @@ def render_markdown(summary, history):
     lines.append(
         "| **Cobertura** | " + " | ".join(_pct(totals["coverage_by_control"][c]) for c in CONTROLS) + " |"
     )
+
+    accepted = [(r["name"], c) for r in summary["repos"] for c, v in r["controls"].items() if v == PRIVATE]
+    if accepted:
+        lines += [
+            "",
+            "## Riesgos aceptados",
+            "",
+            "🔒 Controles que el repo no tiene por ser privado (en repos privados requieren licencia de GitHub Advanced Security). No cuentan en la cobertura:",
+            "",
+        ]
+        for name, control in accepted:
+            lines.append(f"- {name}: {control}")
 
     unavailable = [(r["name"], r["unavailable"]) for r in summary["repos"] if r["unavailable"]]
     if unavailable:

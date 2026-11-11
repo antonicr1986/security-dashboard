@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 
 from .kpis import (
+    PRIVATE,
     SECRET_SOURCE,
     detect_controls,
     from_code_scanning,
@@ -34,7 +35,8 @@ class RepoData:
 
 def collect_repo(client, name):
     # Si el repo no se puede leer, mejor fallar que informar "0 alertas".
-    if client.get_json(f"/repos/{name}") is None:
+    info = client.get_json(f"/repos/{name}")
+    if info is None:
         raise RuntimeError(f"Sin acceso al repo {name}: revisa el token y sus permisos")
 
     alerts = {}
@@ -57,4 +59,7 @@ def collect_repo(client, name):
     # por defecto y para un workflow propio, y solo necesita leer code scanning).
     codeql = client.get_json(f"/repos/{name}/code-scanning/analyses?tool_name=CodeQL&per_page=1")
     controls = detect_controls(texts, has_dependabot, has_codeql_analysis=bool(codeql))
+    # Sin CodeQL en un repo privado sin code scanning: no es un olvido, es la licencia.
+    if not controls["SAST"] and info.get("private") and alerts["code-scanning"] is None:
+        controls["SAST"] = PRIVATE
     return RepoData(name, alerts, controls)
