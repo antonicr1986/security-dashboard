@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-11T00:47:46+00:00",
+  "generated_at": "2026-11-11T01:02:11+00:00",
   "repos": [
     {
       "name": "antonicr1986/FinanceTracker",
@@ -11,7 +11,7 @@
       },
       "secrets": 0,
       "controls": {
-        "SAST": false,
+        "SAST": true,
         "SCA": true,
         "Secretos": true,
         "Contenedores/IaC": true,
@@ -29,7 +29,7 @@
       },
       "secrets": 0,
       "controls": {
-        "SAST": false,
+        "SAST": true,
         "SCA": true,
         "Secretos": true,
         "Contenedores/IaC": false,
@@ -47,7 +47,7 @@
       },
       "secrets": 0,
       "controls": {
-        "SAST": false,
+        "SAST": true,
         "SCA": true,
         "Secretos": true,
         "Contenedores/IaC": false,
@@ -65,7 +65,7 @@
       },
       "secrets": 0,
       "controls": {
-        "SAST": false,
+        "SAST": true,
         "SCA": true,
         "Secretos": true,
         "Contenedores/IaC": false,
@@ -106,9 +106,9 @@
     "mttr_days": 2.8,
     "closed_alerts": 114,
     "oldest_open_days": 0,
-    "control_coverage_pct": 56,
+    "control_coverage_pct": 72,
     "coverage_by_control": {
-      "SAST": 0,
+      "SAST": 80,
       "SCA": 100,
       "Secretos": 100,
       "Contenedores/IaC": 20,
