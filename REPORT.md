@@ -1,6 +1,6 @@
 # Informe de seguridad
 
-Generado: 2026-11-11T01:34:13+00:00 · Repos analizados: 5
+Generado: 2026-11-11T01:41:34+00:00 · Repos analizados: 5
 
 ## Quality gate
 
@@ -16,7 +16,7 @@ Generado: 2026-11-11T01:34:13+00:00 · Repos analizados: 5
 | Secretos expuestos abiertos | 0 |
 | Tiempo medio de resolución | 2.8 días (n=114) |
 | Alerta abierta más antigua | 0 días |
-| Cobertura de controles de seguridad | 95 % |
+| Cobertura de controles de seguridad | 100 % |
 
 ## Alertas abiertas por repo
 
@@ -36,8 +36,14 @@ Generado: 2026-11-11T01:34:13+00:00 · Repos analizados: 5
 | antonicr1986/financetracker-web | ✅ | ✅ | ✅ | N/A | ✅ |
 | antonicr1986/financetracker-android | ✅ | ✅ | ✅ | N/A | N/A |
 | antonicr1986/financetracker-desktop | ✅ | ✅ | ✅ | N/A | N/A |
-| antonicr1986/antonio-cv | ❌ | ✅ | ✅ | N/A | ✅ |
-| **Cobertura** | 80 % | 100 % | 100 % | 100 % | 100 % |
+| antonicr1986/antonio-cv | 🔒 | ✅ | ✅ | N/A | ✅ |
+| **Cobertura** | 100 % | 100 % | 100 % | 100 % | 100 % |
+
+## Riesgos aceptados
+
+🔒 Controles que el repo no tiene por ser privado (en repos privados requieren licencia de GitHub Advanced Security). No cuentan en la cobertura:
+
+- antonicr1986/antonio-cv: SAST
 
 ## Datos no disponibles
 
@@ -49,4 +55,4 @@ Fuente no habilitada en el repo o sin permiso en el token (cuenta como 0 alertas
 
 | Fecha | Crítica | Alta | Media | Baja | Secretos | Cobertura |
 |---|---|---|---|---|---|---|
-| 2026-11-11 | 0 | 14 | 8 | 0 | 0 | 95 % |
+| 2026-11-11 | 0 | 14 | 8 | 0 | 0 | 100 % |

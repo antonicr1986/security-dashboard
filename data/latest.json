@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-11T01:34:13+00:00",
+  "generated_at": "2026-11-11T01:41:34+00:00",
   "repos": [
     {
       "name": "antonicr1986/FinanceTracker",
@@ -83,7 +83,7 @@
       },
       "secrets": 0,
       "controls": {
-        "SAST": false,
+        "SAST": "private",
         "SCA": true,
         "Secretos": true,
         "Contenedores/IaC": null,
@@ -106,9 +106,9 @@
     "mttr_days": 2.8,
     "closed_alerts": 114,
     "oldest_open_days": 0,
-    "control_coverage_pct": 95,
+    "control_coverage_pct": 100,
     "coverage_by_control": {
-      "SAST": 80,
+      "SAST": 100,
       "SCA": 100,
       "Secretos": 100,
       "Contenedores/IaC": 100,
