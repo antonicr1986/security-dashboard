@@ -1,6 +1,6 @@
 # Informe de seguridad
 
-Generado: 2026-11-11T01:02:11+00:00 · Repos analizados: 5
+Generado: 2026-11-11T01:34:13+00:00 · Repos analizados: 5
 
 ## Quality gate
 
@@ -16,7 +16,7 @@ Generado: 2026-11-11T01:02:11+00:00 · Repos analizados: 5
 | Secretos expuestos abiertos | 0 |
 | Tiempo medio de resolución | 2.8 días (n=114) |
 | Alerta abierta más antigua | 0 días |
-| Cobertura de controles de seguridad | 72 % |
+| Cobertura de controles de seguridad | 95 % |
 
 ## Alertas abiertas por repo
 
@@ -33,11 +33,11 @@ Generado: 2026-11-11T01:02:11+00:00 · Repos analizados: 5
 | Repo | SAST | SCA | Secretos | Contenedores/IaC | DAST |
 |---|---|---|---|---|---|
 | antonicr1986/FinanceTracker | ✅ | ✅ | ✅ | ✅ | ✅ |
-| antonicr1986/financetracker-web | ✅ | ✅ | ✅ | ❌ | ✅ |
-| antonicr1986/financetracker-android | ✅ | ✅ | ✅ | ❌ | ❌ |
-| antonicr1986/financetracker-desktop | ✅ | ✅ | ✅ | ❌ | ❌ |
-| antonicr1986/antonio-cv | ❌ | ✅ | ✅ | ❌ | ✅ |
-| **Cobertura** | 80 % | 100 % | 100 % | 20 % | 60 % |
+| antonicr1986/financetracker-web | ✅ | ✅ | ✅ | N/A | ✅ |
+| antonicr1986/financetracker-android | ✅ | ✅ | ✅ | N/A | N/A |
+| antonicr1986/financetracker-desktop | ✅ | ✅ | ✅ | N/A | N/A |
+| antonicr1986/antonio-cv | ❌ | ✅ | ✅ | N/A | ✅ |
+| **Cobertura** | 80 % | 100 % | 100 % | 100 % | 100 % |
 
 ## Datos no disponibles
 
@@ -49,4 +49,4 @@ Fuente no habilitada en el repo o sin permiso en el token (cuenta como 0 alertas
 
 | Fecha | Crítica | Alta | Media | Baja | Secretos | Cobertura |
 |---|---|---|---|---|---|---|
-| 2026-11-11 | 0 | 14 | 8 | 0 | 0 | 72 % |
+| 2026-11-11 | 0 | 14 | 8 | 0 | 0 | 95 % |

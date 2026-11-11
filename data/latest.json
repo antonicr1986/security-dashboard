@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-11T01:02:11+00:00",
+  "generated_at": "2026-11-11T01:34:13+00:00",
   "repos": [
     {
       "name": "antonicr1986/FinanceTracker",
@@ -32,7 +32,7 @@
         "SAST": true,
         "SCA": true,
         "Secretos": true,
-        "Contenedores/IaC": false,
+        "Contenedores/IaC": null,
         "DAST": true
       },
       "unavailable": []
@@ -50,8 +50,8 @@
         "SAST": true,
         "SCA": true,
         "Secretos": true,
-        "Contenedores/IaC": false,
-        "DAST": false
+        "Contenedores/IaC": null,
+        "DAST": null
       },
       "unavailable": []
     },
@@ -68,8 +68,8 @@
         "SAST": true,
         "SCA": true,
         "Secretos": true,
-        "Contenedores/IaC": false,
-        "DAST": false
+        "Contenedores/IaC": null,
+        "DAST": null
       },
       "unavailable": []
     },
@@ -86,7 +86,7 @@
         "SAST": false,
         "SCA": true,
         "Secretos": true,
-        "Contenedores/IaC": false,
+        "Contenedores/IaC": null,
         "DAST": true
       },
       "unavailable": [
@@ -106,13 +106,13 @@
     "mttr_days": 2.8,
     "closed_alerts": 114,
     "oldest_open_days": 0,
-    "control_coverage_pct": 72,
+    "control_coverage_pct": 95,
     "coverage_by_control": {
       "SAST": 80,
       "SCA": 100,
       "Secretos": 100,
-      "Contenedores/IaC": 20,
-      "DAST": 60
+      "Contenedores/IaC": 100,
+      "DAST": 100
     }
   },
   "gate": {
