@@ -1,10 +1,22 @@
 {
   "repos": [
     "antonicr1986/FinanceTracker",
-    "antonicr1986/financetracker-web",
-    "antonicr1986/financetracker-android",
-    "antonicr1986/financetracker-desktop",
-    "antonicr1986/antonio-cv"
+    {
+      "name": "antonicr1986/financetracker-web",
+      "not_applicable": ["Contenedores/IaC"]
+    },
+    {
+      "name": "antonicr1986/financetracker-android",
+      "not_applicable": ["Contenedores/IaC", "DAST"]
+    },
+    {
+      "name": "antonicr1986/financetracker-desktop",
+      "not_applicable": ["Contenedores/IaC", "DAST"]
+    },
+    {
+      "name": "antonicr1986/antonio-cv",
+      "not_applicable": ["Contenedores/IaC"]
+    }
   ],
   "gate": {
     "critical": 0,

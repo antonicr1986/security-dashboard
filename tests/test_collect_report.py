@@ -2,6 +2,7 @@ import base64
 import unittest
 from datetime import datetime, timezone
 
+from dashboard.__main__ import collect_configured_repo
 from dashboard.collect import RepoData, collect_repo
 from dashboard.github_api import _NEXT
 from dashboard.kpis import from_dependabot
@@ -112,3 +113,39 @@ class PaginationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NotApplicableTests(unittest.TestCase):
+    def test_not_applicable_controls_are_left_out_of_coverage(self):
+        api = RepoData("o/api", {"dependabot": []}, {"SAST": True, "SCA": True, "Secretos": True, "Contenedores/IaC": True, "DAST": True})
+        app = RepoData("o/app", {"dependabot": []}, {"SAST": True, "SCA": False, "Secretos": True, "Contenedores/IaC": None, "DAST": None})
+        summary = build_summary([api, app], {}, NOW)
+        totals = summary["totals"]
+        self.assertEqual(totals["coverage_by_control"]["Contenedores/IaC"], 100)  # 1 de 1 aplicable
+        self.assertEqual(totals["coverage_by_control"]["SCA"], 50)
+        self.assertEqual(totals["control_coverage_pct"], 88)  # 7 de 8 aplicables
+        self.assertIn("| o/app | ✅ | ❌ | ✅ | N/A | N/A |", render_markdown(summary, []))
+
+    def test_control_that_applies_to_no_repo_shows_na(self):
+        app = RepoData("o/app", {}, {"SAST": True, "SCA": True, "Secretos": True, "Contenedores/IaC": None, "DAST": None})
+        summary = build_summary([app], {}, NOW)
+        self.assertIsNone(summary["totals"]["coverage_by_control"]["DAST"])
+        self.assertIn("| **Cobertura** | 100 % | 100 % | 100 % | N/A | N/A |", render_markdown(summary, []))
+
+
+class ConfigEntryTests(unittest.TestCase):
+    def setUp(self):
+        self.client = FakeClient({"/repos/o/r": {"name": "r"}})
+
+    def test_plain_string_entry_keeps_every_control(self):
+        repo = collect_configured_repo(self.client, "o/r")
+        self.assertNotIn(None, repo.controls.values())
+
+    def test_not_applicable_entry_marks_controls_as_none(self):
+        repo = collect_configured_repo(self.client, {"name": "o/r", "not_applicable": ["DAST"]})
+        self.assertIsNone(repo.controls["DAST"])
+        self.assertFalse(repo.controls["SAST"])
+
+    def test_unknown_control_name_is_rejected(self):
+        with self.assertRaises(ValueError):
+            collect_configured_repo(self.client, {"name": "o/r", "not_applicable": ["Dast"]})

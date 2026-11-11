@@ -7,8 +7,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .collect import collect_repo
+from .kpis import CONTROLS
 from .github_api import GitHubClient
 from .report import build_summary, render_markdown, snapshot, update_history
+
+
+def collect_configured_repo(client, entry):
+    """Un repo de config.json: "owner/repo" o {"name": ..., "not_applicable": [controles]}."""
+    if isinstance(entry, str):
+        entry = {"name": entry}
+    repo = collect_repo(client, entry["name"])
+    for control in entry.get("not_applicable", []):
+        if control not in CONTROLS:
+            raise ValueError(f"Control desconocido en config.json ({entry['name']}): {control}")
+        repo.controls[control] = None
+    return repo
 
 
 def main(argv=None):
@@ -27,7 +40,7 @@ def main(argv=None):
 
     config = json.loads(Path(args.config).read_text(encoding="utf-8"))
     client = GitHubClient(token)
-    repos = [collect_repo(client, name) for name in config["repos"]]
+    repos = [collect_configured_repo(client, entry) for entry in config["repos"]]
     summary = build_summary(repos, config.get("gate", {}), datetime.now(timezone.utc))
 
     data_dir = Path(args.data_dir)

@@ -23,6 +23,15 @@ Se define en `config.json`. Por defecto no se admite ninguna vulnerabilidad crí
 "gate": { "critical": 0, "high": 0, "secrets": 0 }
 ```
 
+Los repos se listan en el mismo archivo. Un repo puede indicar los controles que no le aplican:
+
+```json
+"repos": [
+  "antonicr1986/FinanceTracker",
+  { "name": "antonicr1986/financetracker-desktop", "not_applicable": ["Contenedores/IaC", "DAST"] }
+]
+```
+
 Las severidades que no aparecen (media, baja) solo se informan, no bloquean: la seguridad avisa de todo, pero solo frena lo que importa. Si el gate no se supera, el workflow termina en rojo, **después** de guardar el informe.
 
 ## Cómo funciona
@@ -62,4 +71,4 @@ python -m unittest discover -s tests -t . -v
 - **Mínimo privilegio**: el workflow arranca sin permisos y solo el job pide `contents: write` para guardar el informe; el token que lee las alertas es de solo lectura; las actions están fijadas por SHA.
 - **"No disponible" no es "cero"**: si una fuente no está habilitada en un repo o el token no tiene permiso, el informe lo lista en *Datos no disponibles*. Si el repo entero no se puede leer, el programa falla en lugar de informar de 0 alertas.
 - **Los controles se detectan por texto** en los workflows (por ejemplo `gitleaks` o `zaproxy`) y por la configuración del repo (Dependabot, CodeQL por defecto). Es una aproximación: dice que el control está en el pipeline, no que esté bien configurado.
-- La cobertura cuenta los mismos controles en todos los repos, aunque alguno no los necesite (un repo sin API no necesita DAST).
+- **Cobertura solo sobre lo aplicable**: cada repo puede declarar en `config.json` los controles que no le corresponden (`not_applicable`). En el informe salen como **N/A** y no cuentan en la cobertura, para que un repo sin API no baje el % de DAST. Lo que no se declara se exige, así que un repo nuevo empieza con todos los controles.

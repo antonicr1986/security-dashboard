@@ -22,12 +22,10 @@ def build_summary(repos, limits, now):
     secrets = open_secrets(alerts)
     mttr, closed = mttr_days(alerts)
 
-    checks = [value for repo in repos for value in repo.controls.values()]
+    # None = el control no aplica a ese repo: no cuenta ni a favor ni en contra.
+    checks = [value for repo in repos for value in repo.controls.values() if value is not None]
     coverage = round(100 * sum(checks) / len(checks)) if checks else 0
-    by_control = {
-        control: round(100 * sum(repo.controls[control] for repo in repos) / len(repos))
-        for control in CONTROLS
-    }
+    by_control = {control: _percentage([repo.controls[control] for repo in repos]) for control in CONTROLS}
 
     return {
         "generated_at": now.isoformat(timespec="seconds"),
@@ -54,6 +52,11 @@ def build_summary(repos, limits, now):
     }
 
 
+def _percentage(values):
+    applicable = [value for value in values if value is not None]
+    return round(100 * sum(applicable) / len(applicable)) if applicable else None
+
+
 def snapshot(summary):
     totals = summary["totals"]
     return {
@@ -71,7 +74,13 @@ def update_history(history, new_snapshot, keep=52):
 
 
 def _mark(value):
+    if value is None:
+        return "N/A"
     return "✅" if value else "❌"
+
+
+def _pct(value):
+    return "N/A" if value is None else f"{value} %"
 
 
 def render_markdown(summary, history):
@@ -126,7 +135,7 @@ def render_markdown(summary, history):
     for repo in summary["repos"]:
         lines.append(f"| {repo['name']} | " + " | ".join(_mark(repo["controls"][c]) for c in CONTROLS) + " |")
     lines.append(
-        "| **Cobertura** | " + " | ".join(f"{totals['coverage_by_control'][c]} %" for c in CONTROLS) + " |"
+        "| **Cobertura** | " + " | ".join(_pct(totals["coverage_by_control"][c]) for c in CONTROLS) + " |"
     )
 
     unavailable = [(r["name"], r["unavailable"]) for r in summary["repos"] if r["unavailable"]]
