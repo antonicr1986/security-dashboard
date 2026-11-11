@@ -1,0 +1,11 @@
+[
+  {
+    "date": "2026-11-11",
+    "critical": 0,
+    "high": 14,
+    "medium": 8,
+    "low": 0,
+    "secrets": 0,
+    "coverage_pct": 56
+  }
+]

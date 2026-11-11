@@ -1,0 +1,128 @@
+{
+  "generated_at": "2026-11-11T00:47:46+00:00",
+  "repos": [
+    {
+      "name": "antonicr1986/FinanceTracker",
+      "open": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "secrets": 0,
+      "controls": {
+        "SAST": false,
+        "SCA": true,
+        "Secretos": true,
+        "Contenedores/IaC": true,
+        "DAST": true
+      },
+      "unavailable": []
+    },
+    {
+      "name": "antonicr1986/financetracker-web",
+      "open": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "secrets": 0,
+      "controls": {
+        "SAST": false,
+        "SCA": true,
+        "Secretos": true,
+        "Contenedores/IaC": false,
+        "DAST": true
+      },
+      "unavailable": []
+    },
+    {
+      "name": "antonicr1986/financetracker-android",
+      "open": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "secrets": 0,
+      "controls": {
+        "SAST": false,
+        "SCA": true,
+        "Secretos": true,
+        "Contenedores/IaC": false,
+        "DAST": false
+      },
+      "unavailable": []
+    },
+    {
+      "name": "antonicr1986/financetracker-desktop",
+      "open": {
+        "critical": 0,
+        "high": 14,
+        "medium": 8,
+        "low": 0
+      },
+      "secrets": 0,
+      "controls": {
+        "SAST": false,
+        "SCA": true,
+        "Secretos": true,
+        "Contenedores/IaC": false,
+        "DAST": false
+      },
+      "unavailable": []
+    },
+    {
+      "name": "antonicr1986/antonio-cv",
+      "open": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "secrets": 0,
+      "controls": {
+        "SAST": false,
+        "SCA": true,
+        "Secretos": true,
+        "Contenedores/IaC": false,
+        "DAST": true
+      },
+      "unavailable": [
+        "code-scanning",
+        "secret-scanning"
+      ]
+    }
+  ],
+  "totals": {
+    "open": {
+      "critical": 0,
+      "high": 14,
+      "medium": 8,
+      "low": 0
+    },
+    "secrets": 0,
+    "mttr_days": 2.8,
+    "closed_alerts": 114,
+    "oldest_open_days": 0,
+    "control_coverage_pct": 56,
+    "coverage_by_control": {
+      "SAST": 0,
+      "SCA": 100,
+      "Secretos": 100,
+      "Contenedores/IaC": 20,
+      "DAST": 60
+    }
+  },
+  "gate": {
+    "limits": {
+      "critical": 0,
+      "high": 0,
+      "secrets": 0
+    },
+    "failures": [
+      "high: 14 abiertas (m\u00e1ximo 0)"
+    ]
+  }
+}
