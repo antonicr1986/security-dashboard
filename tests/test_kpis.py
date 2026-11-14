@@ -14,6 +14,7 @@ from dashboard.kpis import (
     oldest_open_days,
     open_by_severity,
     open_secrets,
+    sla_compliance,
 )
 
 NOW = datetime(2026, 11, 10, tzinfo=timezone.utc)
@@ -78,6 +79,37 @@ class KpiTests(unittest.TestCase):
         alerts = [dependabot("low", created="2026-10-31T00:00:00Z"), dependabot("low", created="2026-11-09T00:00:00Z")]
         self.assertEqual(oldest_open_days(alerts, NOW), 10)
         self.assertIsNone(oldest_open_days([], NOW))
+
+
+class SlaTests(unittest.TestCase):
+    SLA = {"critical": 7, "high": 30}
+
+    def test_fixed_alerts_are_measured_against_their_severity_deadline(self):
+        alerts = [
+            dependabot("critical", "fixed", "2026-11-01T00:00:00Z", "2026-11-08T00:00:00Z"),  # 7 días: justo en plazo
+            dependabot("critical", "fixed", "2026-11-01T00:00:00Z", "2026-11-08T00:00:01Z"),  # fuera por 1 segundo
+            dependabot("high", "fixed", "2026-10-01T00:00:00Z", "2026-10-20T00:00:00Z"),
+        ]
+        result = sla_compliance(alerts, self.SLA, NOW)
+        self.assertEqual(result["critical"], {"within": 1, "total": 2, "overdue_open": 0})
+        self.assertEqual(result["high"], {"within": 1, "total": 1, "overdue_open": 0})
+
+    def test_open_alert_only_counts_once_it_is_overdue(self):
+        alerts = [
+            dependabot("critical", created="2026-11-01T00:00:00Z"),  # 9 días abierta: fuera de plazo
+            dependabot("critical", created="2026-11-05T00:00:00Z"),  # 5 días: aún en plazo, no cuenta
+        ]
+        self.assertEqual(sla_compliance(alerts, self.SLA, NOW)["critical"], {"within": 0, "total": 1, "overdue_open": 1})
+
+    def test_dismissed_secrets_and_severities_without_deadline_are_left_out(self):
+        alerts = [
+            dependabot("critical", "dismissed"),
+            dependabot("low", "fixed", "2026-01-01T00:00:00Z", "2026-11-01T00:00:00Z"),  # sin plazo para "low"
+            from_secret_scanning({"state": "open", "created_at": "2026-01-01T00:00:00Z"}),
+        ]
+        result = sla_compliance(alerts, self.SLA, NOW)
+        self.assertNotIn("low", result)
+        self.assertEqual(sum(entry["total"] for entry in result.values()), 0)
 
 
 class ControlTests(unittest.TestCase):

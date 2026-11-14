@@ -9,6 +9,7 @@ from .kpis import (
     oldest_open_days,
     open_by_severity,
     open_secrets,
+    sla_compliance,
 )
 
 _SEVERITY_NAMES = {"critical": "crítica", "high": "alta", "medium": "media", "low": "baja"}
@@ -20,7 +21,7 @@ _SOURCE_NAMES = {
 }
 
 
-def build_summary(repos, limits, now, accepted_details=False):
+def build_summary(repos, limits, now, accepted_details=False, sla_days=None):
     """Resumen para el informe y para data/latest.json.
 
     accepted_details=False deja fuera el paquete y el comentario de los riesgos
@@ -37,6 +38,12 @@ def build_summary(repos, limits, now, accepted_details=False):
     checks = [value for repo in repos for value in repo.controls.values() if isinstance(value, bool)]
     coverage = round(100 * sum(checks) / len(checks)) if checks else 0
     by_control = {control: _percentage([repo.controls[control] for repo in repos]) for control in CONTROLS}
+
+    sla_days = sla_days or {}
+    sla = sla_compliance(alerts, sla_days, now)
+    sla_within = sum(entry["within"] for entry in sla.values())
+    sla_total = sum(entry["total"] for entry in sla.values())
+    sla_overdue = sum(entry["overdue_open"] for entry in sla.values())
 
     chains = [repo.supply_chain for repo in repos if repo.supply_chain]
     actions_total = sum(c["actions_total"] for c in chains)
@@ -75,6 +82,12 @@ def build_summary(repos, limits, now, accepted_details=False):
             "workflows_with_permissions_pct": _ratio(workflows_total - workflows_open, workflows_total),
             "accepted_risks": len(accepted),
             "accepted_without_comment": unjustified,
+            "sla_days": sla_days,
+            "sla": sla,
+            "sla_within": sla_within,
+            "sla_total": sla_total,
+            "sla_pct": _ratio(sla_within, sla_total),
+            "sla_overdue_open": sla_overdue,
         },
         "gate": {
             "limits": limits,
@@ -86,6 +99,7 @@ def build_summary(repos, limits, now, accepted_details=False):
                     "unpinned_actions": (actions_total - actions_pinned, "actions sin fijar por SHA"),
                     "workflows_without_permissions": (workflows_open, "workflows sin 'permissions:'"),
                     "accepted_without_comment": (unjustified, "riesgos aceptados sin justificar"),
+                    "overdue_alerts": (sla_overdue, "alertas abiertas fuera de plazo"),
                 },
             ),
         },
@@ -118,6 +132,7 @@ def snapshot(summary):
         "coverage_pct": totals["control_coverage_pct"],
         "actions_pinned_pct": totals["actions_pinned_pct"],
         "accepted_risks": totals["accepted_risks"],
+        "sla_pct": totals["sla_pct"],
     }
 
 
@@ -143,6 +158,16 @@ def _fraction(part, total):
     if not total:
         return "N/A"
     return f"{'✅' if part == total else '❌'} {part} de {total}"
+
+
+def _sla_cell(totals):
+    if not totals["sla"]:
+        return "sin plazos definidos"
+    if not totals["sla_total"]:
+        return "sin datos"
+    overdue = totals["sla_overdue_open"]
+    extra = f" · ⚠️ {overdue} abiertas fuera de plazo" if overdue else ""
+    return f"{totals['sla_pct']} % ({totals['sla_within']} de {totals['sla_total']}){extra}"
 
 
 def _unjustified(count):
@@ -178,6 +203,7 @@ def render_markdown(summary, history):
         f"| Secretos expuestos abiertos | {totals['secrets']} |",
         f"| Tiempo medio de resolución | {mttr} |",
         f"| Alerta abierta más antigua | {oldest} |",
+        f"| Alertas resueltas en plazo (SLA) | {_sla_cell(totals)} |",
         f"| Cobertura de controles de seguridad | {totals['control_coverage_pct']} % |",
         f"| Actions fijadas por SHA | {_pct(totals['actions_pinned_pct'])} ({totals['actions_pinned']} de {totals['actions_total']}) |",
         f"| Workflows con permisos mínimos declarados | {_pct(totals['workflows_with_permissions_pct'])} |",
@@ -193,6 +219,22 @@ def render_markdown(summary, history):
         lines.append(
             f"| {repo['name']} | {o['critical']} | {o['high']} | {o['medium']} | {o['low']} | {repo['secrets']} |"
         )
+
+    if totals["sla"]:
+        lines += [
+            "",
+            "## Plazos de corrección (SLA)",
+            "",
+            "Días máximos para corregir una alerta según su severidad. Una alerta abierta que supera su plazo cuenta como incumplida.",
+            "",
+            "| Severidad | Plazo | Resueltas en plazo | Abiertas fuera de plazo |",
+            "|---|---|---|---|",
+        ]
+        for severity, entry in totals["sla"].items():
+            closed = entry["total"] - entry["overdue_open"]
+            in_time = f"{entry['within']} de {closed} ({_ratio(entry['within'], closed)} %)" if closed else "sin datos"
+            overdue = f"⚠️ {entry['overdue_open']}" if entry["overdue_open"] else "0"
+            lines.append(f"| {_SEVERITY_NAMES[severity].capitalize()} | {totals['sla_days'][severity]} días | {in_time} | {overdue} |")
 
     lines += [
         "",
@@ -270,14 +312,15 @@ def render_markdown(summary, history):
         "",
         "## Evolución semanal",
         "",
-        "| Fecha | Crítica | Alta | Media | Baja | Secretos | Cobertura | Actions por SHA | Riesgos aceptados |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| Fecha | Crítica | Alta | Media | Baja | Secretos | Cobertura | Actions por SHA | Riesgos aceptados | En plazo (SLA) |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for item in reversed(history[-8:]):
-        # Las fotos anteriores a estos KPIs no tienen las dos ultimas columnas.
+        # Las fotos anteriores a estos KPIs no tienen las ultimas columnas.
         accepted_risks = item.get("accepted_risks")
         lines.append(
             f"| {item['date']} | {item['critical']} | {item['high']} | {item['medium']} | {item['low']} | {item['secrets']} | {item['coverage_pct']} % "
-            f"| {_pct(item.get('actions_pinned_pct'))} | {'N/A' if accepted_risks is None else accepted_risks} |"
+            f"| {_pct(item.get('actions_pinned_pct'))} | {'N/A' if accepted_risks is None else accepted_risks} "
+            f"| {_pct(item.get('sla_pct'))} |"
         )
     return "\n".join(lines) + "\n"

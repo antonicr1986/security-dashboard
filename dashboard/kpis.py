@@ -119,6 +119,29 @@ def oldest_open_days(alerts, now):
     return max(ages) if ages else None
 
 
+def sla_compliance(alerts, sla_days, now):
+    """Cumplimiento de plazos de corrección por severidad.
+
+    Una alerta corregida cumple si se cerró dentro del plazo de su severidad. Una
+    abierta que ya lo ha superado cuenta como incumplida; si aún está en plazo, no
+    cuenta todavía. Descartadas, secretos y severidades sin plazo quedan fuera.
+    Devuelve {severidad: {"within", "total", "overdue_open"}}.
+    """
+    result = {s: {"within": 0, "total": 0, "overdue_open": 0} for s in SEVERITIES if sla_days.get(s) is not None}
+    for alert in alerts:
+        entry = result.get(alert.severity)
+        if entry is None or alert.source == SECRET_SOURCE:
+            continue
+        limit = sla_days[alert.severity] * 86400
+        if alert.state == "fixed" and alert.fixed_at:
+            entry["total"] += 1
+            entry["within"] += (alert.fixed_at - alert.created_at).total_seconds() <= limit
+        elif alert.state == "open" and (now - alert.created_at).total_seconds() > limit:
+            entry["total"] += 1
+            entry["overdue_open"] += 1
+    return result
+
+
 def detect_controls(workflow_texts, has_dependabot, has_codeql_analysis=False):
     """Qué controles de seguridad tiene un repo, según sus workflows y su configuración."""
     text = "\n".join(workflow_texts).lower()

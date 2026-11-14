@@ -277,3 +277,35 @@ class SupplyChainReportTests(unittest.TestCase):
         markdown = render_markdown(summary, [old])
         self.assertIn("| 2026-11-03 | 0 | 0 | 0 | 0 | 0 | 100 % | N/A | N/A |", markdown)
         self.assertIn("| o/r | N/A | N/A |", markdown)
+
+
+class SlaReportTests(unittest.TestCase):
+    CONTROLS = dict.fromkeys(("SAST", "SCA", "Secretos", "Contenedores/IaC", "DAST"), True)
+
+    def test_summary_report_and_gate(self):
+        late = from_dependabot(
+            {"state": "fixed", "created_at": "2026-10-01T00:00:00Z", "fixed_at": "2026-11-05T00:00:00Z", "security_advisory": {"severity": "high"}}
+        )
+        overdue = from_dependabot(
+            {"state": "open", "created_at": "2026-06-01T00:00:00Z", "security_advisory": {"severity": "medium"}}
+        )
+        repo = RepoData("o/r", {"dependabot": [alert("critical", "fixed", "2026-11-03T00:00:00Z"), late, overdue]}, self.CONTROLS)
+        sla_days = {"critical": 7, "high": 30, "medium": 90}
+        summary = build_summary([repo], {"overdue_alerts": 0}, NOW, sla_days=sla_days)
+        totals = summary["totals"]
+        self.assertEqual((totals["sla_within"], totals["sla_total"], totals["sla_pct"]), (1, 3, 33))
+        self.assertEqual(totals["sla_overdue_open"], 1)
+        self.assertEqual(summary["gate"]["failures"], ["alertas abiertas fuera de plazo: 1 (máximo 0)"])
+        self.assertEqual(snapshot(summary)["sla_pct"], 33)
+
+        markdown = render_markdown(summary, [])
+        self.assertIn("| Alertas resueltas en plazo (SLA) | 33 % (1 de 3) · ⚠️ 1 abiertas fuera de plazo |", markdown)
+        self.assertIn("| Crítica | 7 días | 1 de 1 (100 %) | 0 |", markdown)
+        self.assertIn("| Alta | 30 días | 0 de 1 (0 %) | 0 |", markdown)
+        self.assertIn("| Media | 90 días | sin datos | ⚠️ 1 |", markdown)
+
+    def test_without_configured_deadlines_the_section_is_omitted(self):
+        repo = RepoData("o/r", {"dependabot": [alert("critical", "fixed", "2026-11-03T00:00:00Z")]}, self.CONTROLS)
+        markdown = render_markdown(build_summary([repo], {}, NOW), [])
+        self.assertIn("| Alertas resueltas en plazo (SLA) | sin plazos definidos |", markdown)
+        self.assertNotIn("## Plazos de corrección", markdown)

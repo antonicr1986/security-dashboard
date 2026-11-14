@@ -46,6 +46,7 @@ def main(argv=None):
         config.get("gate", {}),
         datetime.now(timezone.utc),
         accepted_details=config.get("accepted_risk_details", False),
+        sla_days=config.get("sla_days"),
     )
 
     data_dir = Path(args.data_dir)
