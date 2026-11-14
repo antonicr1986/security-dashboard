@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T01:26:44+00:00",
+  "generated_at": "2026-11-14T01:34:24+00:00",
   "repos": [
     {
       "name": "antonicr1986/FinanceTracker",
@@ -25,7 +25,12 @@
         "workflows_total": 4,
         "without_permissions": []
       },
-      "accepted": []
+      "accepted": [],
+      "update_prs": {
+        "open": 0,
+        "oldest_days": null,
+        "stale": 0
+      }
     },
     {
       "name": "antonicr1986/financetracker-web",
@@ -51,7 +56,12 @@
         "workflows_total": 2,
         "without_permissions": []
       },
-      "accepted": []
+      "accepted": [],
+      "update_prs": {
+        "open": 0,
+        "oldest_days": null,
+        "stale": 0
+      }
     },
     {
       "name": "antonicr1986/financetracker-android",
@@ -108,7 +118,12 @@
           "reason": "not_used",
           "justified": true
         }
-      ]
+      ],
+      "update_prs": {
+        "open": 0,
+        "oldest_days": null,
+        "stale": 0
+      }
     },
     {
       "name": "antonicr1986/financetracker-desktop",
@@ -134,7 +149,12 @@
         "workflows_total": 3,
         "without_permissions": []
       },
-      "accepted": []
+      "accepted": [],
+      "update_prs": {
+        "open": 0,
+        "oldest_days": null,
+        "stale": 0
+      }
     },
     {
       "name": "antonicr1986/antonio-cv",
@@ -169,7 +189,12 @@
           "reason": "not_used",
           "justified": true
         }
-      ]
+      ],
+      "update_prs": {
+        "open": 1,
+        "oldest_days": 0,
+        "stale": 0
+      }
     }
   ],
   "totals": {
@@ -229,7 +254,11 @@
     "sla_within": 135,
     "sla_total": 136,
     "sla_pct": 99,
-    "sla_overdue_open": 0
+    "sla_overdue_open": 0,
+    "update_pr_max_days": 30,
+    "update_prs_open": 1,
+    "update_prs_stale": 0,
+    "update_prs_oldest_days": 0
   },
   "gate": {
     "limits": {

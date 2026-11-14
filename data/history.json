@@ -18,6 +18,7 @@
     "coverage_pct": 100,
     "actions_pinned_pct": 100,
     "accepted_risks": 7,
-    "sla_pct": 99
+    "sla_pct": 99,
+    "update_prs": 1
   }
 ]
