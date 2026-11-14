@@ -179,3 +179,101 @@ class PrivateRepoTests(unittest.TestCase):
         self.assertIn("| o/cv | 🔒 | ✅ | ✅ | N/A | ✅ |", markdown)
         self.assertIn("## Riesgos aceptados", markdown)
         self.assertIn("- o/cv: SAST", markdown)
+
+
+class SupplyChainReportTests(unittest.TestCase):
+    SHA = "3d3c42e5aac5ba805825da76410c181273ba90b1"
+
+    def collect(self, workflows, dependabot=None):
+        responses = {
+            "/repos/o/r": {"name": "r"},
+            "/repos/o/r/contents/.github/workflows": [
+                {"name": name, "url": f"{API}/repos/o/r/contents/.github/workflows/{name}"} for name in workflows
+            ],
+        }
+        for name, text in workflows.items():
+            responses[f"/repos/o/r/contents/.github/workflows/{name}"] = {
+                "content": base64.b64encode(text.encode()).decode()
+            }
+        if dependabot is not None:
+            responses["/repos/o/r/dependabot/alerts"] = dependabot
+        return collect_repo(FakeClient(responses), "o/r")
+
+    def test_collects_pinning_and_permissions_per_workflow(self):
+        repo = self.collect(
+            {
+                "ci.yml": f"permissions:\n  contents: read\nsteps:\n  - uses: actions/checkout@{self.SHA}\n  - uses: actions/setup-node@v7",
+                "release.yml": f"steps:\n  - uses: actions/checkout@{self.SHA}",
+                "notas.md": "uses: no/es-un-workflow@v1",
+            }
+        )
+        self.assertEqual(
+            repo.supply_chain,
+            {
+                "actions_pinned": 2,
+                "actions_total": 3,
+                "unpinned": ["ci.yml: actions/setup-node@v7"],
+                "workflows_total": 2,
+                "without_permissions": ["release.yml"],
+            },
+        )
+
+    def test_summary_report_and_gate(self):
+        dismissed = {
+            "state": "dismissed",
+            "created_at": "2026-11-01T00:00:00Z",
+            "dismissed_reason": "not_used",
+            "dismissed_comment": "Solo desarrollo",
+            "dependency": {"package": {"name": "minimatch"}},
+            "security_advisory": {"severity": "medium"},
+        }
+        repo = self.collect(
+            {"ci.yml": f"steps:\n  - uses: actions/checkout@{self.SHA}\n  - uses: actions/setup-node@v7"},
+            dependabot=[dismissed, {**dismissed, "dismissed_comment": ""}],
+        )
+        limits = {"unpinned_actions": 0, "workflows_without_permissions": 0, "accepted_without_comment": 0}
+        summary = build_summary([repo], limits, NOW)
+        totals = summary["totals"]
+        self.assertEqual(totals["actions_pinned_pct"], 50)
+        self.assertEqual(totals["workflows_with_permissions_pct"], 0)
+        self.assertEqual((totals["accepted_risks"], totals["accepted_without_comment"]), (2, 1))
+        self.assertEqual(totals["open"]["medium"], 0)  # descartada: no cuenta como abierta
+        self.assertEqual(
+            summary["gate"]["failures"],
+            [
+                "actions sin fijar por SHA: 1 (máximo 0)",
+                "workflows sin 'permissions:': 1 (máximo 0)",
+                "riesgos aceptados sin justificar: 1 (máximo 0)",
+            ],
+        )
+        self.assertEqual(snapshot(summary)["actions_pinned_pct"], 50)
+
+        markdown = render_markdown(summary, [])
+        self.assertIn("| Actions fijadas por SHA | 50 % (1 de 2) |", markdown)
+        self.assertIn("| o/r | ❌ 1 de 2 | ❌ 0 de 1 |", markdown)
+        self.assertIn("- o/r · ci.yml: actions/setup-node@v7", markdown)
+        self.assertIn("- o/r: 1 alerta (media) · código vulnerable no usado · ✅ justificada", markdown)
+        self.assertIn("⚠️ **sin justificar**", markdown)
+
+    def test_accepted_risk_details_are_hidden_unless_asked(self):
+        dismissed = {
+            "state": "dismissed",
+            "created_at": "2026-11-01T00:00:00Z",
+            "dismissed_reason": "not_used",
+            "dismissed_comment": "Solo desarrollo",
+            "dependency": {"package": {"name": "minimatch"}},
+            "security_advisory": {"severity": "medium"},
+        }
+        repo = self.collect({}, dependabot=[dismissed])
+        hidden = build_summary([repo], {}, NOW)
+        self.assertNotIn("minimatch", str(hidden))
+        self.assertNotIn("Solo desarrollo", str(hidden))
+        shown = render_markdown(build_summary([repo], {}, NOW, accepted_details=True), [])
+        self.assertIn("- o/r: `minimatch` (media) · código vulnerable no usado · ✅ justificada — Solo desarrollo", shown)
+
+    def test_old_history_entries_without_the_new_kpis_still_render(self):
+        old = {"date": "2026-11-03", "critical": 0, "high": 0, "medium": 0, "low": 0, "secrets": 0, "coverage_pct": 100}
+        summary = build_summary([RepoData("o/r", {}, dict.fromkeys(("SAST", "SCA", "Secretos", "Contenedores/IaC", "DAST"), True))], {}, NOW)
+        markdown = render_markdown(summary, [old])
+        self.assertIn("| 2026-11-03 | 0 | 0 | 0 | 0 | 0 | 100 % | N/A | N/A |", markdown)
+        self.assertIn("| o/r | N/A | N/A |", markdown)

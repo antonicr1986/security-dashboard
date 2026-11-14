@@ -2,6 +2,7 @@
 
 Son funciones puras (sin red), para poder probarlas con datos de ejemplo.
 """
+import re
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -23,6 +24,22 @@ CONTROLS = {
     "Secretos": ("gitleaks",),
     "Contenedores/IaC": ("trivy",),
     "DAST": ("zaproxy",),
+}
+
+# Una action esta fijada si lo que va tras la @ es el SHA completo de un commit
+# (40 hex). Un tag (@v4) o una rama (@main) los puede mover quien controle el repo.
+_USES = re.compile(r"^\s*(?:-\s*)?uses:\s*[\"']?([^\s\"'#]+)", re.MULTILINE)
+_SHA = re.compile(r"[0-9a-f]{40}")
+_DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
+_PERMISSIONS = re.compile(r"^permissions:", re.MULTILINE)
+
+# Motivos con los que GitHub deja descartar una alerta de Dependabot.
+DISMISS_REASONS = {
+    "fix_started": "corrección en curso",
+    "inaccurate": "alerta incorrecta",
+    "no_bandwidth": "sin capacidad para corregirla",
+    "not_used": "código vulnerable no usado",
+    "tolerable_risk": "riesgo tolerable",
 }
 
 
@@ -111,8 +128,59 @@ def detect_controls(workflow_texts, has_dependabot, has_codeql_analysis=False):
     return found
 
 
-def evaluate_gate(open_counts, secrets, limits):
-    """Quality gate: devuelve la lista de incumplimientos (vacía = aprobado)."""
+def action_pinning(workflow_text):
+    """Actions de un workflow: (nº fijadas por SHA, nº total, lista de las no fijadas).
+
+    Las actions locales (./ruta) no cuentan: viven en el propio repo. Una imagen
+    docker:// cuenta como fijada si va por digest (@sha256:...).
+    """
+    total, unpinned = 0, []
+    for ref in _USES.findall(workflow_text):
+        if ref.startswith("./"):
+            continue
+        total += 1
+        _, _, version = ref.partition("@")
+        pinned = _DIGEST.fullmatch(version) if ref.startswith("docker://") else _SHA.fullmatch(version)
+        if not pinned:
+            unpinned.append(ref)
+    return total - len(unpinned), total, unpinned
+
+
+def declares_permissions(workflow_text):
+    """True si el workflow limita el GITHUB_TOKEN con un 'permissions:' propio.
+
+    Sin el, el token usa los permisos por defecto del repo, que pueden ser de escritura.
+    """
+    return bool(_PERMISSIONS.search(workflow_text))
+
+
+def accepted_risks(raw_dependabot_alerts):
+    """Alertas de Dependabot descartadas a mano: son riesgos aceptados y deben verse.
+
+    Las que GitHub descarta solo (auto_dismissed) no son una decision de nadie y no entran.
+    """
+    risks = []
+    for raw in raw_dependabot_alerts:
+        if raw.get("state") != "dismissed":
+            continue
+        advisory = raw.get("security_advisory") or {}
+        severity = (advisory.get("severity") or "low").lower()
+        risks.append(
+            {
+                "package": ((raw.get("dependency") or {}).get("package") or {}).get("name") or "?",
+                "severity": severity if severity in SEVERITIES else "low",
+                "reason": raw.get("dismissed_reason") or "",
+                "comment": (raw.get("dismissed_comment") or "").strip(),
+            }
+        )
+    return risks
+
+
+def evaluate_gate(open_counts, secrets, limits, extra=None):
+    """Quality gate: devuelve la lista de incumplimientos (vacía = aprobado).
+
+    'extra' son otros contadores con limite opcional: {clave: (valor, descripcion)}.
+    """
     failures = []
     for severity in SEVERITIES:
         limit = limits.get(severity)
@@ -121,4 +189,8 @@ def evaluate_gate(open_counts, secrets, limits):
     limit = limits.get("secrets")
     if limit is not None and secrets > limit:
         failures.append(f"secretos: {secrets} abiertos (máximo {limit})")
+    for key, (value, label) in (extra or {}).items():
+        limit = limits.get(key)
+        if limit is not None and value > limit:
+            failures.append(f"{label}: {value} (máximo {limit})")
     return failures

@@ -13,15 +13,23 @@ Panel de KPIs de seguridad para mis repos de GitHub. Cada lunes un workflow de G
 | Tiempo medio de resolución (MTTR) | Media de días entre que se abre y se corrige una alerta (solo las corregidas) |
 | Alerta abierta más antigua | Días que lleva abierta la más vieja |
 | Cobertura de controles | % de controles presentes: SAST (CodeQL), SCA (Dependabot, npm audit, dotnet --vulnerable, dependency review), secretos (gitleaks), contenedores/IaC (Trivy) y DAST (OWASP ZAP) |
+| Actions fijadas por SHA | % de `uses:` de los workflows que apuntan al SHA completo de un commit (no a un tag ni a una rama) |
+| Workflows con permisos mínimos | % de workflows que declaran su propio `permissions:` para el `GITHUB_TOKEN` |
+| Riesgos aceptados | Alertas de Dependabot descartadas a mano, con su motivo y si llevan justificación escrita |
 | Evolución semanal | Foto de cada ejecución en [`data/history.json`](data), para ver la tendencia |
 
 ### Quality gate
 
-Se define en `config.json`. Por defecto no se admite ninguna vulnerabilidad crítica ni alta ni ningún secreto abierto:
+Se define en `config.json`. Por defecto no se admite ninguna vulnerabilidad crítica ni alta, ningún secreto abierto, ninguna action sin fijar, ningún workflow sin `permissions:` ni ningún riesgo aceptado sin justificar:
 
 ```json
-"gate": { "critical": 0, "high": 0, "secrets": 0 }
+"gate": {
+  "critical": 0, "high": 0, "secrets": 0,
+  "unpinned_actions": 0, "workflows_without_permissions": 0, "accepted_without_comment": 0
+}
 ```
+
+Un límite que no aparece no se aplica: el dato sale en el informe, pero no bloquea.
 
 Los repos se listan en el mismo archivo. Un repo puede indicar los controles que no le aplican:
 
@@ -72,4 +80,7 @@ python -m unittest discover -s tests -t . -v
 - **"No disponible" no es "cero"**: si una fuente no está habilitada en un repo o el token no tiene permiso, el informe lo lista en *Datos no disponibles*. Si el repo entero no se puede leer, el programa falla en lugar de informar de 0 alertas.
 - **Riesgos aceptados en repos privados**: CodeQL en un repo privado requiere licencia de GitHub Advanced Security. Si un repo es privado y no tiene code scanning, su SAST sale como 🔒 en lugar de ❌, no cuenta en la cobertura y aparece en la sección *Riesgos aceptados* del informe: es una decisión documentada, no un hueco escondido.
 - **Los controles se detectan por texto** en los workflows (por ejemplo `gitleaks` o `zaproxy`) y por la configuración del repo (Dependabot, CodeQL por defecto). Es una aproximación: dice que el control está en el pipeline, no que esté bien configurado.
+- **Cadena de suministro**: un tag (`@v4`) lo puede mover quien controle el repo de la action; un SHA no. Es lo que pasó con `tj-actions/changed-files` (2025) y con `trivy-action` (marzo de 2026), donde se reescribieron los tags para robar secretos de los pipelines. Por eso el informe cuenta las actions sin fijar y el gate no admite ninguna. Se analiza el texto de los workflows: las actions locales (`./ruta`) no cuentan y una imagen `docker://` cuenta como fijada si va por digest. Lo que se instala dentro de un `run:` (un binario con `curl`, una imagen con `docker run`) no se ve desde aquí.
+- **Permisos del `GITHUB_TOKEN`**: se comprueba que cada workflow declara `permissions:` a nivel de workflow, no que los permisos declarados sean los mínimos posibles.
+- **Una alerta descartada no desaparece**: descartar una alerta de Dependabot la saca del recuento de abiertas, pero la vulnerabilidad sigue ahí. El informe las lista en *Riesgos aceptados* con su motivo, y marca las que no tienen comentario: sin justificación escrita no es una aceptación de riesgo, es ignorar la alerta. Las que GitHub descarta solo (`auto_dismissed`) no cuentan. Por defecto no se publica ni el paquete ni el comentario (`"accepted_risk_details": false`), porque en un repo público sería una lista de vulnerabilidades conocidas y sin corregir.
 - **Cobertura solo sobre lo aplicable**: cada repo puede declarar en `config.json` los controles que no le corresponden (`not_applicable`). En el informe salen como **N/A** y no cuentan en la cobertura, para que un repo sin API no baje el % de DAST. Lo que no se declara se exige, así que un repo nuevo empieza con todos los controles.

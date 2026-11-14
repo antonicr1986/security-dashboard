@@ -21,6 +21,10 @@
   "gate": {
     "critical": 0,
     "high": 0,
-    "secrets": 0
-  }
+    "secrets": 0,
+    "unpinned_actions": 0,
+    "workflows_without_permissions": 0,
+    "accepted_without_comment": 0
+  },
+  "accepted_risk_details": false
 }

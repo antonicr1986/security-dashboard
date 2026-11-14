@@ -2,6 +2,9 @@ import unittest
 from datetime import datetime, timezone
 
 from dashboard.kpis import (
+    accepted_risks,
+    action_pinning,
+    declares_permissions,
     detect_controls,
     evaluate_gate,
     from_code_scanning,
@@ -105,6 +108,73 @@ class GateTests(unittest.TestCase):
     def test_severity_without_limit_is_not_enforced(self):
         counts = {"critical": 0, "high": 0, "medium": 50, "low": 50}
         self.assertEqual(evaluate_gate(counts, 0, {"critical": 0}), [])
+
+    def test_extra_counters_are_enforced_only_with_a_limit(self):
+        counts = dict.fromkeys(("critical", "high", "medium", "low"), 0)
+        extra = {"unpinned_actions": (2, "actions sin fijar por SHA")}
+        self.assertEqual(evaluate_gate(counts, 0, {}, extra), [])
+        self.assertEqual(
+            evaluate_gate(counts, 0, {"unpinned_actions": 0}, extra), ["actions sin fijar por SHA: 2 (máximo 0)"]
+        )
+
+
+SHA = "3d3c42e5aac5ba805825da76410c181273ba90b1"
+
+
+class SupplyChainTests(unittest.TestCase):
+    def test_only_a_full_commit_sha_counts_as_pinned(self):
+        workflow = f"""
+        steps:
+          - uses: actions/checkout@{SHA} # v7.0.1
+          - uses: actions/setup-node@v7
+          - name: Build
+            uses: docker/build-push-action@main
+          - uses: actions/cache@3d3c42e   # SHA corto: no vale
+        """
+        pinned, total, unpinned = action_pinning(workflow)
+        self.assertEqual((pinned, total), (1, 4))
+        self.assertEqual(unpinned, ["actions/setup-node@v7", "docker/build-push-action@main", "actions/cache@3d3c42e"])
+
+    def test_local_actions_are_ignored_and_docker_needs_a_digest(self):
+        workflow = f"""
+          - uses: ./.github/actions/setup
+          - uses: docker://alpine:3.20
+          - uses: docker://alpine@sha256:{'a' * 64}
+          # - uses: actions/checkout@v1   (comentado: no cuenta)
+        """
+        self.assertEqual(action_pinning(workflow), (1, 2, ["docker://alpine:3.20"]))
+
+    def test_workflow_without_actions(self):
+        self.assertEqual(action_pinning("steps:\n  - run: echo hola"), (0, 0, []))
+
+    def test_permissions_must_be_declared_at_workflow_level(self):
+        self.assertTrue(declares_permissions("name: CI\npermissions:\n  contents: read\njobs: {}"))
+        self.assertTrue(declares_permissions("permissions: {}\njobs: {}"))
+        # Solo dentro de un job: los demas jobs siguen con los permisos por defecto.
+        self.assertFalse(declares_permissions("jobs:\n  build:\n    permissions:\n      contents: read"))
+
+
+class AcceptedRiskTests(unittest.TestCase):
+    def test_only_manually_dismissed_alerts_are_accepted_risks(self):
+        raw = [
+            {"state": "open", "security_advisory": {"severity": "high"}},
+            {"state": "auto_dismissed", "security_advisory": {"severity": "low"}},
+            {
+                "state": "dismissed",
+                "dismissed_reason": "not_used",
+                "dismissed_comment": " Solo desarrollo ",
+                "dependency": {"package": {"name": "minimatch"}},
+                "security_advisory": {"severity": "medium"},
+            },
+            {"state": "dismissed", "dismissed_reason": "tolerable_risk", "dismissed_comment": None},
+        ]
+        self.assertEqual(
+            accepted_risks(raw),
+            [
+                {"package": "minimatch", "severity": "medium", "reason": "not_used", "comment": "Solo desarrollo"},
+                {"package": "?", "severity": "low", "reason": "tolerable_risk", "comment": ""},
+            ],
+        )
 
 
 if __name__ == "__main__":

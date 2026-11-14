@@ -41,7 +41,12 @@ def main(argv=None):
     config = json.loads(Path(args.config).read_text(encoding="utf-8"))
     client = GitHubClient(token)
     repos = [collect_configured_repo(client, entry) for entry in config["repos"]]
-    summary = build_summary(repos, config.get("gate", {}), datetime.now(timezone.utc))
+    summary = build_summary(
+        repos,
+        config.get("gate", {}),
+        datetime.now(timezone.utc),
+        accepted_details=config.get("accepted_risk_details", False),
+    )
 
     data_dir = Path(args.data_dir)
     data_dir.mkdir(exist_ok=True)
