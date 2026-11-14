@@ -32,5 +32,6 @@
     "medium": 90,
     "low": 180
   },
+  "update_pr_max_days": 30,
   "accepted_risk_details": false
 }

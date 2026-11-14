@@ -47,6 +47,7 @@ def main(argv=None):
         datetime.now(timezone.utc),
         accepted_details=config.get("accepted_risk_details", False),
         sla_days=config.get("sla_days"),
+        update_pr_max_days=config.get("update_pr_max_days", 30),
     )
 
     data_dir = Path(args.data_dir)

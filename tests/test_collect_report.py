@@ -309,3 +309,49 @@ class SlaReportTests(unittest.TestCase):
         markdown = render_markdown(build_summary([repo], {}, NOW), [])
         self.assertIn("| Alertas resueltas en plazo (SLA) | sin plazos definidos |", markdown)
         self.assertNotIn("## Plazos de corrección", markdown)
+
+
+class UpdatePrReportTests(unittest.TestCase):
+    CONTROLS = dict.fromkeys(("SAST", "SCA", "Secretos", "Contenedores/IaC", "DAST"), True)
+
+    def test_collects_only_dependabot_pull_requests(self):
+        client = FakeClient(
+            {
+                "/repos/o/r": {"name": "r"},
+                "/repos/o/r/pulls": [
+                    {"created_at": "2026-11-01T00:00:00Z", "user": {"login": "dependabot[bot]"}},
+                    {"created_at": "2026-11-02T00:00:00Z", "user": {"login": "someone"}},
+                ],
+            }
+        )
+        self.assertEqual(len(collect_repo(client, "o/r").update_prs), 1)
+
+    def test_unreadable_pull_requests_are_not_reported_as_zero(self):
+        repo = collect_repo(FakeClient({"/repos/o/r": {"name": "r"}}), "o/r")
+        self.assertIsNone(repo.update_prs)
+        summary = build_summary([repo], {"stale_update_prs": 0}, NOW)
+        self.assertIsNone(summary["totals"]["update_prs_open"])
+        self.assertEqual(summary["gate"]["failures"], [])
+        markdown = render_markdown(summary, [])
+        self.assertIn("| PRs de Dependabot pendientes | sin acceso |", markdown)
+        self.assertIn("| o/r | sin acceso | sin acceso | sin acceso |", markdown)
+
+    def test_summary_report_and_gate(self):
+        old = datetime(2026, 9, 1, tzinfo=timezone.utc)
+        recent = datetime(2026, 11, 9, tzinfo=timezone.utc)
+        repos = [
+            RepoData("o/api", {}, self.CONTROLS, update_prs=[old, recent]),
+            RepoData("o/web", {}, self.CONTROLS, update_prs=[]),
+            RepoData("o/cv", {}, self.CONTROLS),
+        ]
+        summary = build_summary(repos, {"stale_update_prs": 0}, NOW, update_pr_max_days=30)
+        totals = summary["totals"]
+        self.assertEqual((totals["update_prs_open"], totals["update_prs_stale"], totals["update_prs_oldest_days"]), (2, 1, 70))
+        self.assertEqual(summary["gate"]["failures"], ["PRs de Dependabot fuera de plazo: 1 (máximo 0)"])
+        self.assertEqual(snapshot(summary)["update_prs"], 2)
+
+        markdown = render_markdown(summary, [])
+        self.assertIn("| PRs de Dependabot pendientes | 2 · la más antigua, 70 días · ⚠️ 1 con más de 30 días |", markdown)
+        self.assertIn("| o/api | 2 | 70 días | ⚠️ 1 |", markdown)
+        self.assertIn("| o/web | 0 | — | 0 |", markdown)
+        self.assertIn("| o/cv | sin acceso | sin acceso | sin acceso |", markdown)

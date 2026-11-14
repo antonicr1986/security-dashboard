@@ -10,6 +10,7 @@ from .kpis import (
     open_by_severity,
     open_secrets,
     sla_compliance,
+    update_pr_stats,
 )
 
 _SEVERITY_NAMES = {"critical": "crítica", "high": "alta", "medium": "media", "low": "baja"}
@@ -21,7 +22,7 @@ _SOURCE_NAMES = {
 }
 
 
-def build_summary(repos, limits, now, accepted_details=False, sla_days=None):
+def build_summary(repos, limits, now, accepted_details=False, sla_days=None, update_pr_max_days=30):
     """Resumen para el informe y para data/latest.json.
 
     accepted_details=False deja fuera el paquete y el comentario de los riesgos
@@ -45,6 +46,16 @@ def build_summary(repos, limits, now, accepted_details=False, sla_days=None):
     sla_total = sum(entry["total"] for entry in sla.values())
     sla_overdue = sum(entry["overdue_open"] for entry in sla.values())
 
+    # None = el token no puede leer las PR de ese repo: no se suma como si fueran 0.
+    pr_stats = {
+        repo.name: None if repo.update_prs is None else update_pr_stats(repo.update_prs, now, update_pr_max_days)
+        for repo in repos
+    }
+    readable = [stats for stats in pr_stats.values() if stats is not None]
+    prs_open = sum(stats["open"] for stats in readable) if readable else None
+    prs_stale = sum(stats["stale"] for stats in readable)
+    prs_oldest = max((stats["oldest_days"] for stats in readable if stats["oldest_days"] is not None), default=None)
+
     chains = [repo.supply_chain for repo in repos if repo.supply_chain]
     actions_total = sum(c["actions_total"] for c in chains)
     actions_pinned = sum(c["actions_pinned"] for c in chains)
@@ -64,6 +75,7 @@ def build_summary(repos, limits, now, accepted_details=False, sla_days=None):
                 "unavailable": repo.unavailable,
                 "supply_chain": repo.supply_chain,
                 "accepted": [_accepted_entry(risk, accepted_details) for risk in repo.accepted],
+                "update_prs": pr_stats[repo.name],
             }
             for repo in repos
         ],
@@ -88,6 +100,10 @@ def build_summary(repos, limits, now, accepted_details=False, sla_days=None):
             "sla_total": sla_total,
             "sla_pct": _ratio(sla_within, sla_total),
             "sla_overdue_open": sla_overdue,
+            "update_pr_max_days": update_pr_max_days,
+            "update_prs_open": prs_open,
+            "update_prs_stale": prs_stale,
+            "update_prs_oldest_days": prs_oldest,
         },
         "gate": {
             "limits": limits,
@@ -100,6 +116,7 @@ def build_summary(repos, limits, now, accepted_details=False, sla_days=None):
                     "workflows_without_permissions": (workflows_open, "workflows sin 'permissions:'"),
                     "accepted_without_comment": (unjustified, "riesgos aceptados sin justificar"),
                     "overdue_alerts": (sla_overdue, "alertas abiertas fuera de plazo"),
+                    "stale_update_prs": (prs_stale, "PRs de Dependabot fuera de plazo"),
                 },
             ),
         },
@@ -133,6 +150,7 @@ def snapshot(summary):
         "actions_pinned_pct": totals["actions_pinned_pct"],
         "accepted_risks": totals["accepted_risks"],
         "sla_pct": totals["sla_pct"],
+        "update_prs": totals["update_prs_open"],
     }
 
 
@@ -170,6 +188,16 @@ def _sla_cell(totals):
     return f"{totals['sla_pct']} % ({totals['sla_within']} de {totals['sla_total']}){extra}"
 
 
+def _update_prs_cell(totals):
+    if totals["update_prs_open"] is None:
+        return "sin acceso"
+    if not totals["update_prs_open"]:
+        return "0"
+    stale = totals["update_prs_stale"]
+    extra = f" · ⚠️ {stale} con más de {totals['update_pr_max_days']} días" if stale else ""
+    return f"{totals['update_prs_open']} · la más antigua, {totals['update_prs_oldest_days']} días{extra}"
+
+
 def _unjustified(count):
     return f" · ⚠️ {count} sin justificar" if count else ""
 
@@ -204,6 +232,7 @@ def render_markdown(summary, history):
         f"| Tiempo medio de resolución | {mttr} |",
         f"| Alerta abierta más antigua | {oldest} |",
         f"| Alertas resueltas en plazo (SLA) | {_sla_cell(totals)} |",
+        f"| PRs de Dependabot pendientes | {_update_prs_cell(totals)} |",
         f"| Cobertura de controles de seguridad | {totals['control_coverage_pct']} % |",
         f"| Actions fijadas por SHA | {_pct(totals['actions_pinned_pct'])} ({totals['actions_pinned']} de {totals['actions_total']}) |",
         f"| Workflows con permisos mínimos declarados | {_pct(totals['workflows_with_permissions_pct'])} |",
@@ -276,6 +305,28 @@ def render_markdown(summary, history):
     if open_workflows:
         lines += ["", "Workflows sin `permissions:` (el token usa los permisos por defecto del repo):", ""] + open_workflows
 
+    lines += [
+        "",
+        "## Actualizaciones pendientes",
+        "",
+        f"PRs abiertas por Dependabot sin fusionar. Fijar versiones solo es seguro si luego se actualizan: una PR con más de {totals['update_pr_max_days']} días está fuera de plazo.",
+        "",
+        "| Repo | PRs abiertas | La más antigua | Fuera de plazo |",
+        "|---|---|---|---|",
+    ]
+    no_access = []
+    for repo in summary["repos"]:
+        stats = repo["update_prs"]
+        if stats is None:
+            lines.append(f"| {repo['name']} | sin acceso | sin acceso | sin acceso |")
+            no_access.append(repo["name"])
+            continue
+        oldest = f"{stats['oldest_days']} días" if stats["oldest_days"] is not None else "—"
+        stale = f"⚠️ {stats['stale']}" if stats["stale"] else "0"
+        lines.append(f"| {repo['name']} | {stats['open']} | {oldest} | {stale} |")
+    if no_access:
+        lines += ["", "Sin acceso: el token no tiene el permiso *Pull requests* (solo lectura) en ese repo. No se cuenta como 0."]
+
     private = [(r["name"], c) for r in summary["repos"] for c, v in r["controls"].items() if v == PRIVATE]
     dismissed = [(r["name"], risk) for r in summary["repos"] for risk in r["accepted"]]
     if private or dismissed:
@@ -312,8 +363,8 @@ def render_markdown(summary, history):
         "",
         "## Evolución semanal",
         "",
-        "| Fecha | Crítica | Alta | Media | Baja | Secretos | Cobertura | Actions por SHA | Riesgos aceptados | En plazo (SLA) |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| Fecha | Crítica | Alta | Media | Baja | Secretos | Cobertura | Actions por SHA | Riesgos aceptados | En plazo (SLA) | PRs pendientes |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for item in reversed(history[-8:]):
         # Las fotos anteriores a estos KPIs no tienen las ultimas columnas.
@@ -321,6 +372,6 @@ def render_markdown(summary, history):
         lines.append(
             f"| {item['date']} | {item['critical']} | {item['high']} | {item['medium']} | {item['low']} | {item['secrets']} | {item['coverage_pct']} % "
             f"| {_pct(item.get('actions_pinned_pct'))} | {'N/A' if accepted_risks is None else accepted_risks} "
-            f"| {_pct(item.get('sla_pct'))} |"
+            f"| {_pct(item.get('sla_pct'))} | {'N/A' if item.get('update_prs') is None else item['update_prs']} |"
         )
     return "\n".join(lines) + "\n"

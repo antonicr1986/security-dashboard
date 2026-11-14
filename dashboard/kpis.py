@@ -142,6 +142,28 @@ def sla_compliance(alerts, sla_days, now):
     return result
 
 
+DEPENDABOT_LOGIN = "dependabot[bot]"
+
+
+def update_pr_dates(raw_pulls):
+    """Fecha de apertura de cada PR abierta por Dependabot (las de otras personas no cuentan)."""
+    return [
+        parse_time(pull["created_at"])
+        for pull in raw_pulls
+        if ((pull.get("user") or {}).get("login")) == DEPENDABOT_LOGIN
+    ]
+
+
+def update_pr_stats(opened_at, now, max_days):
+    """PRs de actualización pendientes: cuántas, edad de la más antigua y cuántas superan el plazo."""
+    ages = [(now - opened).days for opened in opened_at]
+    return {
+        "open": len(ages),
+        "oldest_days": max(ages) if ages else None,
+        "stale": sum(1 for age in ages if age > max_days),
+    }
+
+
 def detect_controls(workflow_texts, has_dependabot, has_codeql_analysis=False):
     """Qué controles de seguridad tiene un repo, según sus workflows y su configuración."""
     text = "\n".join(workflow_texts).lower()

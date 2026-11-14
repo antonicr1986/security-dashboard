@@ -11,6 +11,7 @@ from .kpis import (
     from_code_scanning,
     from_dependabot,
     from_secret_scanning,
+    update_pr_dates,
 )
 
 # Fuente -> (endpoint, conversor)
@@ -28,6 +29,7 @@ class RepoData:
     controls: dict = field(default_factory=dict)  # control -> bool
     supply_chain: dict = field(default_factory=dict)  # actions fijadas y permisos de los workflows
     accepted: list = field(default_factory=list)  # alertas de Dependabot descartadas a mano
+    update_prs: list | None = None  # fecha de cada PR abierta de Dependabot, o None si no disponible
 
     @property
     def all_alerts(self):
@@ -70,7 +72,10 @@ def collect_repo(client, name):
     # Sin CodeQL en un repo privado sin code scanning: no es un olvido, es la licencia.
     if not controls["SAST"] and info.get("private") and alerts["code-scanning"] is None:
         controls["SAST"] = PRIVATE
-    return RepoData(name, alerts, controls, _supply_chain(files), accepted)
+    # Sin permiso "Pull requests" en el token devuelve None: se informa como no disponible, no como 0.
+    pulls = client.get_list(f"/repos/{name}/pulls")
+    update_prs = None if pulls is None else update_pr_dates(pulls)
+    return RepoData(name, alerts, controls, _supply_chain(files), accepted, update_prs)
 
 
 def _supply_chain(files):

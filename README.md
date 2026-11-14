@@ -14,6 +14,7 @@ Panel de KPIs de seguridad para mis repos de GitHub. Cada lunes un workflow de G
 | Alerta abierta más antigua | Días que lleva abierta la más vieja |
 | Cobertura de controles | % de controles presentes: SAST (CodeQL), SCA (Dependabot, npm audit, dotnet --vulnerable, dependency review), secretos (gitleaks), contenedores/IaC (Trivy) y DAST (OWASP ZAP) |
 | Alertas resueltas en plazo (SLA) | % de alertas corregidas dentro del plazo de su severidad (por defecto: crítica 7 días, alta 30, media 90, baja 180). Una alerta abierta que supera su plazo cuenta como incumplida |
+| PRs de Dependabot pendientes | PRs de actualización abiertas sin fusionar, edad de la más antigua y cuántas superan el plazo (por defecto, 30 días) |
 | Actions fijadas por SHA | % de `uses:` de los workflows que apuntan al SHA completo de un commit (no a un tag ni a una rama) |
 | Workflows con permisos mínimos | % de workflows que declaran su propio `permissions:` para el `GITHUB_TOKEN` |
 | Riesgos aceptados | Alertas de Dependabot descartadas a mano, con su motivo y si llevan justificación escrita |
@@ -32,11 +33,14 @@ Se define en `config.json`. Por defecto no se admite ninguna vulnerabilidad crí
 
 Un límite que no aparece no se aplica: el dato sale en el informe, pero no bloquea. Por ejemplo, `"overdue_alerts": 0` haría fallar el gate si alguna alerta abierta supera su plazo de corrección.
 
-Los plazos de corrección se definen en el mismo archivo, en días por severidad:
+Los plazos se definen en el mismo archivo: días para corregir una alerta según su severidad y días máximos que puede estar abierta una PR de Dependabot:
 
 ```json
-"sla_days": { "critical": 7, "high": 30, "medium": 90, "low": 180 }
+"sla_days": { "critical": 7, "high": 30, "medium": 90, "low": 180 },
+"update_pr_max_days": 30
 ```
+
+Con `"stale_update_prs": 0` en el gate, una PR de Dependabot fuera de plazo también lo haría fallar.
 
 Los repos se listan en el mismo archivo. Un repo puede indicar los controles que no le aplican:
 
@@ -67,7 +71,7 @@ GitHub API ──► collect.py ──► kpis.py (cálculo, sin red) ──► 
 1. **Token de solo lectura.** Las alertas de otros repos no se pueden leer con el `GITHUB_TOKEN` del workflow, así que hace falta un PAT *fine-grained*:
    - Settings → Developer settings → Fine-grained tokens → *Generate new token*.
    - Acceso solo a los repos de `config.json`.
-   - Permisos de **solo lectura**: *Dependabot alerts*, *Code scanning alerts*, *Secret scanning alerts*, *Contents* y *Metadata*.
+   - Permisos de **solo lectura**: *Dependabot alerts*, *Code scanning alerts*, *Secret scanning alerts*, *Pull requests*, *Contents* y *Metadata*.
    - Caducidad corta (90 días).
 2. Guárdalo como secreto del repo con el nombre **`DASHBOARD_TOKEN`** (Settings → Secrets and variables → Actions).
 3. Lanza el workflow a mano: Actions → *Weekly security report* → *Run workflow*.
@@ -88,6 +92,7 @@ python -m unittest discover -s tests -t . -v
 - **Riesgos aceptados en repos privados**: CodeQL en un repo privado requiere licencia de GitHub Advanced Security. Si un repo es privado y no tiene code scanning, su SAST sale como 🔒 en lugar de ❌, no cuenta en la cobertura y aparece en la sección *Riesgos aceptados* del informe: es una decisión documentada, no un hueco escondido.
 - **Los controles se detectan por texto** en los workflows (por ejemplo `gitleaks` o `zaproxy`) y por la configuración del repo (Dependabot, CodeQL por defecto). Es una aproximación: dice que el control está en el pipeline, no que esté bien configurado.
 - **La media no basta**: el MTTR puede ser bueno aunque una alerta crítica tardara un mes, porque muchas correcciones rápidas la tapan. Por eso el informe mide también cuántas se corrigieron dentro del plazo de su severidad. Una alerta abierta solo cuenta cuando ya ha superado su plazo (como incumplida); las descartadas y los secretos quedan fuera, y una severidad sin plazo en `sla_days` no se mide.
+- **Fijar versiones obliga a actualizarlas**: una action fijada por SHA no cambia sola, así que la seguridad depende de fusionar las PR de Dependabot. El informe cuenta las que siguen abiertas y cuánto llevan esperando. Solo cuentan las PR cuyo autor es `dependabot[bot]`, y no se publican sus títulos. Si el token no tiene el permiso *Pull requests* en un repo, sale como "sin acceso", no como 0. Lo que Dependabot no ve (versiones dentro de un `run:`) tampoco aparece aquí.
 - **Cadena de suministro**: un tag (`@v4`) lo puede mover quien controle el repo de la action; un SHA no. Es lo que pasó con `tj-actions/changed-files` (2025) y con `trivy-action` (marzo de 2026), donde se reescribieron los tags para robar secretos de los pipelines. Por eso el informe cuenta las actions sin fijar y el gate no admite ninguna. Se analiza el texto de los workflows: las actions locales (`./ruta`) no cuentan y una imagen `docker://` cuenta como fijada si va por digest. Lo que se instala dentro de un `run:` (un binario con `curl`, una imagen con `docker run`) no se ve desde aquí.
 - **Permisos del `GITHUB_TOKEN`**: se comprueba que cada workflow declara `permissions:` a nivel de workflow, no que los permisos declarados sean los mínimos posibles.
 - **Una alerta descartada no desaparece**: descartar una alerta de Dependabot la saca del recuento de abiertas, pero la vulnerabilidad sigue ahí. El informe las lista en *Riesgos aceptados* con su motivo, y marca las que no tienen comentario: sin justificación escrita no es una aceptación de riesgo, es ignorar la alerta. Las que GitHub descarta solo (`auto_dismissed`) no cuentan. Por defecto no se publica ni el paquete ni el comentario (`"accepted_risk_details": false`), porque en un repo público sería una lista de vulnerabilidades conocidas y sin corregir.

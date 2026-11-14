@@ -15,6 +15,8 @@ from dashboard.kpis import (
     open_by_severity,
     open_secrets,
     sla_compliance,
+    update_pr_dates,
+    update_pr_stats,
 )
 
 NOW = datetime(2026, 11, 10, tzinfo=timezone.utc)
@@ -110,6 +112,24 @@ class SlaTests(unittest.TestCase):
         result = sla_compliance(alerts, self.SLA, NOW)
         self.assertNotIn("low", result)
         self.assertEqual(sum(entry["total"] for entry in result.values()), 0)
+
+
+class UpdatePrTests(unittest.TestCase):
+    def test_only_dependabot_pull_requests_count(self):
+        raw = [
+            {"created_at": "2026-11-01T00:00:00Z", "user": {"login": "dependabot[bot]"}},
+            {"created_at": "2026-11-02T00:00:00Z", "user": {"login": "antonicr1986"}},
+            {"created_at": "2026-11-03T00:00:00Z", "user": None},
+        ]
+        self.assertEqual(update_pr_dates(raw), [datetime(2026, 11, 1, tzinfo=timezone.utc)])
+
+    def test_stats_count_open_oldest_and_stale(self):
+        opened = [datetime(2026, 9, 1, tzinfo=timezone.utc), datetime(2026, 10, 11, tzinfo=timezone.utc), datetime(2026, 11, 9, tzinfo=timezone.utc)]
+        # 70, 30 y 1 días: solo la primera supera el plazo de 30 (30 justos aún está en plazo)
+        self.assertEqual(update_pr_stats(opened, NOW, 30), {"open": 3, "oldest_days": 70, "stale": 1})
+
+    def test_stats_without_pull_requests(self):
+        self.assertEqual(update_pr_stats([], NOW, 30), {"open": 0, "oldest_days": None, "stale": 0})
 
 
 class ControlTests(unittest.TestCase):
