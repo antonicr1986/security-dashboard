@@ -17,6 +17,7 @@
     "secrets": 0,
     "coverage_pct": 100,
     "actions_pinned_pct": 100,
-    "accepted_risks": 7
+    "accepted_risks": 7,
+    "sla_pct": 99
   }
 ]
