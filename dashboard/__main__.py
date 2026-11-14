@@ -6,6 +6,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .card import TEXTS, render_card
 from .collect import collect_repo
 from .kpis import CONTROLS
 from .github_api import GitHubClient
@@ -57,6 +58,9 @@ def main(argv=None):
     history = update_history(history, snapshot(summary))
     history_file.write_text(json.dumps(history, indent=2) + "\n", encoding="utf-8")
     (data_dir / "latest.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    # Tarjeta resumen para incrustar en un README: una por idioma.
+    for lang in TEXTS:
+        (data_dir / f"summary-card.{lang}.svg").write_text(render_card(summary, lang), encoding="utf-8")
 
     markdown = render_markdown(summary, history)
     Path(args.out).write_text(markdown, encoding="utf-8")

@@ -4,6 +4,8 @@ Panel de KPIs de seguridad para mis repos de GitHub. Cada lunes un workflow de G
 
 > 🇬🇧 **English:** security KPI dashboard for my GitHub repos. A weekly GitHub Actions job reads Dependabot, CodeQL and secret-scanning alerts plus the security controls each repo runs, computes the KPIs below, applies a configurable quality gate and commits the report to `REPORT.md`. Python standard library only, no dependencies.
 
+![Tarjeta resumen con los KPIs de seguridad](data/summary-card.es.svg)
+
 ## Qué mide
 
 | KPI | Cómo se calcula |
@@ -64,6 +66,7 @@ GitHub API ──► collect.py ──► kpis.py (cálculo, sin red) ──► 
 - `dashboard/github_api.py`: cliente mínimo de la API REST (paginación y gestión de errores).
 - `dashboard/kpis.py`: funciones puras con los cálculos; son lo que cubren los tests.
 - `dashboard/collect.py` y `report.py`: recogida por repo e informe en Markdown.
+- `dashboard/card.py`: tarjeta resumen en SVG (`data/summary-card.es.svg` y `.en.svg`) para incrustarla en otro README. Lleva su propio fondo para verse igual en tema claro y oscuro, y no carga nada externo.
 - `.github/workflows/`: `ci.yml` (tests en cada push) y `weekly-report.yml` (informe semanal).
 
 ## Puesta en marcha
