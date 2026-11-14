@@ -7,5 +7,16 @@
     "low": 0,
     "secrets": 0,
     "coverage_pct": 100
+  },
+  {
+    "date": "2026-11-14",
+    "critical": 0,
+    "high": 0,
+    "medium": 1,
+    "low": 0,
+    "secrets": 0,
+    "coverage_pct": 100,
+    "actions_pinned_pct": 100,
+    "accepted_risks": 7
   }
 ]

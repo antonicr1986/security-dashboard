@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-11T01:54:32+00:00",
+  "generated_at": "2026-11-14T01:02:29+00:00",
   "repos": [
     {
       "name": "antonicr1986/FinanceTracker",
@@ -17,14 +17,22 @@
         "Contenedores/IaC": true,
         "DAST": true
       },
-      "unavailable": []
+      "unavailable": [],
+      "supply_chain": {
+        "actions_pinned": 25,
+        "actions_total": 25,
+        "unpinned": [],
+        "workflows_total": 4,
+        "without_permissions": []
+      },
+      "accepted": []
     },
     {
       "name": "antonicr1986/financetracker-web",
       "open": {
         "critical": 0,
         "high": 0,
-        "medium": 0,
+        "medium": 1,
         "low": 0
       },
       "secrets": 0,
@@ -35,7 +43,15 @@
         "Contenedores/IaC": null,
         "DAST": true
       },
-      "unavailable": []
+      "unavailable": [],
+      "supply_chain": {
+        "actions_pinned": 7,
+        "actions_total": 7,
+        "unpinned": [],
+        "workflows_total": 2,
+        "without_permissions": []
+      },
+      "accepted": []
     },
     {
       "name": "antonicr1986/financetracker-android",
@@ -53,7 +69,46 @@
         "Contenedores/IaC": null,
         "DAST": null
       },
-      "unavailable": []
+      "unavailable": [],
+      "supply_chain": {
+        "actions_pinned": 15,
+        "actions_total": 15,
+        "unpinned": [],
+        "workflows_total": 3,
+        "without_permissions": []
+      },
+      "accepted": [
+        {
+          "severity": "high",
+          "reason": "not_used",
+          "justified": true
+        },
+        {
+          "severity": "high",
+          "reason": "not_used",
+          "justified": true
+        },
+        {
+          "severity": "critical",
+          "reason": "not_used",
+          "justified": true
+        },
+        {
+          "severity": "medium",
+          "reason": "not_used",
+          "justified": true
+        },
+        {
+          "severity": "medium",
+          "reason": "not_used",
+          "justified": true
+        },
+        {
+          "severity": "medium",
+          "reason": "not_used",
+          "justified": true
+        }
+      ]
     },
     {
       "name": "antonicr1986/financetracker-desktop",
@@ -71,7 +126,15 @@
         "Contenedores/IaC": null,
         "DAST": null
       },
-      "unavailable": []
+      "unavailable": [],
+      "supply_chain": {
+        "actions_pinned": 10,
+        "actions_total": 10,
+        "unpinned": [],
+        "workflows_total": 3,
+        "without_permissions": []
+      },
+      "accepted": []
     },
     {
       "name": "antonicr1986/antonio-cv",
@@ -92,6 +155,20 @@
       "unavailable": [
         "code-scanning",
         "secret-scanning"
+      ],
+      "supply_chain": {
+        "actions_pinned": 9,
+        "actions_total": 9,
+        "unpinned": [],
+        "workflows_total": 1,
+        "without_permissions": []
+      },
+      "accepted": [
+        {
+          "severity": "medium",
+          "reason": "not_used",
+          "justified": true
+        }
       ]
     }
   ],
@@ -99,13 +176,13 @@
     "open": {
       "critical": 0,
       "high": 0,
-      "medium": 0,
+      "medium": 1,
       "low": 0
     },
     "secrets": 0,
     "mttr_days": 2.3,
     "closed_alerts": 136,
-    "oldest_open_days": null,
+    "oldest_open_days": 0,
     "control_coverage_pct": 100,
     "coverage_by_control": {
       "SAST": 100,
@@ -113,13 +190,23 @@
       "Secretos": 100,
       "Contenedores/IaC": 100,
       "DAST": 100
-    }
+    },
+    "actions_pinned": 66,
+    "actions_total": 66,
+    "actions_pinned_pct": 100,
+    "workflows_total": 13,
+    "workflows_with_permissions_pct": 100,
+    "accepted_risks": 7,
+    "accepted_without_comment": 0
   },
   "gate": {
     "limits": {
       "critical": 0,
       "high": 0,
-      "secrets": 0
+      "secrets": 0,
+      "unpinned_actions": 0,
+      "workflows_without_permissions": 0,
+      "accepted_without_comment": 0
     },
     "failures": []
   }
