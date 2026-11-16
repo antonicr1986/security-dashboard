@@ -1,6 +1,6 @@
 # Informe de seguridad
 
-Generado: 2026-11-14T01:34:24+00:00 · Repos analizados: 5
+Generado: 2026-11-16T15:47:56+00:00 · Repos analizados: 5
 
 ## Quality gate
 
@@ -10,23 +10,23 @@ Generado: 2026-11-14T01:34:24+00:00 · Repos analizados: 5
 
 | KPI | Valor |
 |---|---|
-| Vulnerabilidades abiertas (crítica / alta / media / baja) | 0 / 0 / 1 / 0 |
+| Vulnerabilidades abiertas (crítica / alta / media / baja) | 0 / 0 / 0 / 0 |
 | Secretos expuestos abiertos | 0 |
 | Tiempo medio de resolución | 2.3 días (n=136) |
-| Alerta abierta más antigua | 0 días |
+| Alerta abierta más antigua | ninguna abierta |
 | Alertas resueltas en plazo (SLA) | 99 % (135 de 136) |
-| PRs de Dependabot pendientes | 1 · la más antigua, 0 días |
+| PRs de Dependabot pendientes | 0 |
 | Cobertura de controles de seguridad | 100 % |
-| Actions fijadas por SHA | 100 % (66 de 66) |
+| Actions fijadas por SHA | 100 % (68 de 68) |
 | Workflows con permisos mínimos declarados | 100 % |
-| Riesgos aceptados (alertas descartadas a mano) | 7 |
+| Riesgos aceptados (alertas descartadas a mano) | 8 |
 
 ## Alertas abiertas por repo
 
 | Repo | Crítica | Alta | Media | Baja | Secretos |
 |---|---|---|---|---|---|
 | antonicr1986/FinanceTracker | 0 | 0 | 0 | 0 | 0 |
-| antonicr1986/financetracker-web | 0 | 0 | 1 | 0 | 0 |
+| antonicr1986/financetracker-web | 0 | 0 | 0 | 0 | 0 |
 | antonicr1986/financetracker-android | 0 | 0 | 0 | 0 | 0 |
 | antonicr1986/financetracker-desktop | 0 | 0 | 0 | 0 | 0 |
 | antonicr1986/antonio-cv | 0 | 0 | 0 | 0 | 0 |
@@ -59,7 +59,7 @@ Higiene de los workflows de GitHub Actions de cada repo.
 
 | Repo | Actions fijadas por SHA | Workflows con `permissions:` |
 |---|---|---|
-| antonicr1986/FinanceTracker | ✅ 25 de 25 | ✅ 4 de 4 |
+| antonicr1986/FinanceTracker | ✅ 27 de 27 | ✅ 4 de 4 |
 | antonicr1986/financetracker-web | ✅ 7 de 7 | ✅ 2 de 2 |
 | antonicr1986/financetracker-android | ✅ 15 de 15 | ✅ 3 de 3 |
 | antonicr1986/financetracker-desktop | ✅ 10 de 10 | ✅ 3 de 3 |
@@ -75,7 +75,7 @@ PRs abiertas por Dependabot sin fusionar. Fijar versiones solo es seguro si lueg
 | antonicr1986/financetracker-web | 0 | — | 0 |
 | antonicr1986/financetracker-android | 0 | — | 0 |
 | antonicr1986/financetracker-desktop | 0 | — | 0 |
-| antonicr1986/antonio-cv | 1 | 0 días | 0 |
+| antonicr1986/antonio-cv | 0 | — | 0 |
 
 ## Riesgos aceptados
 
@@ -85,6 +85,7 @@ PRs abiertas por Dependabot sin fusionar. Fijar versiones solo es seguro si lueg
 
 📝 Alertas de Dependabot descartadas a mano. No cuentan como abiertas, pero siguen sin corregir: cada una necesita un motivo y una justificación escrita.
 
+- antonicr1986/financetracker-web: 1 alerta (media) · código vulnerable no usado · ✅ justificada
 - antonicr1986/financetracker-android: 1 alerta (alta) · código vulnerable no usado · ✅ justificada
 - antonicr1986/financetracker-android: 1 alerta (alta) · código vulnerable no usado · ✅ justificada
 - antonicr1986/financetracker-android: 1 alerta (crítica) · código vulnerable no usado · ✅ justificada
@@ -103,5 +104,6 @@ Fuente no habilitada en el repo o sin permiso en el token (cuenta como 0 alertas
 
 | Fecha | Crítica | Alta | Media | Baja | Secretos | Cobertura | Actions por SHA | Riesgos aceptados | En plazo (SLA) | PRs pendientes |
 |---|---|---|---|---|---|---|---|---|---|---|
+| 2026-11-16 | 0 | 0 | 0 | 0 | 0 | 100 % | 100 % | 8 | 99 % | 0 |
 | 2026-11-14 | 0 | 0 | 1 | 0 | 0 | 100 % | 100 % | 7 | 99 % | 1 |
 | 2026-11-11 | 0 | 0 | 0 | 0 | 0 | 100 % | N/A | N/A | N/A | N/A |

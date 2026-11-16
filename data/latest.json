@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T01:34:24+00:00",
+  "generated_at": "2026-11-16T15:47:56+00:00",
   "repos": [
     {
       "name": "antonicr1986/FinanceTracker",
@@ -19,8 +19,8 @@
       },
       "unavailable": [],
       "supply_chain": {
-        "actions_pinned": 25,
-        "actions_total": 25,
+        "actions_pinned": 27,
+        "actions_total": 27,
         "unpinned": [],
         "workflows_total": 4,
         "without_permissions": []
@@ -37,7 +37,7 @@
       "open": {
         "critical": 0,
         "high": 0,
-        "medium": 1,
+        "medium": 0,
         "low": 0
       },
       "secrets": 0,
@@ -56,7 +56,13 @@
         "workflows_total": 2,
         "without_permissions": []
       },
-      "accepted": [],
+      "accepted": [
+        {
+          "severity": "medium",
+          "reason": "not_used",
+          "justified": true
+        }
+      ],
       "update_prs": {
         "open": 0,
         "oldest_days": null,
@@ -191,8 +197,8 @@
         }
       ],
       "update_prs": {
-        "open": 1,
-        "oldest_days": 0,
+        "open": 0,
+        "oldest_days": null,
         "stale": 0
       }
     }
@@ -201,13 +207,13 @@
     "open": {
       "critical": 0,
       "high": 0,
-      "medium": 1,
+      "medium": 0,
       "low": 0
     },
     "secrets": 0,
     "mttr_days": 2.3,
     "closed_alerts": 136,
-    "oldest_open_days": 0,
+    "oldest_open_days": null,
     "control_coverage_pct": 100,
     "coverage_by_control": {
       "SAST": 100,
@@ -216,12 +222,12 @@
       "Contenedores/IaC": 100,
       "DAST": 100
     },
-    "actions_pinned": 66,
-    "actions_total": 66,
+    "actions_pinned": 68,
+    "actions_total": 68,
     "actions_pinned_pct": 100,
     "workflows_total": 13,
     "workflows_with_permissions_pct": 100,
-    "accepted_risks": 7,
+    "accepted_risks": 8,
     "accepted_without_comment": 0,
     "sla_days": {
       "critical": 7,
@@ -256,9 +262,9 @@
     "sla_pct": 99,
     "sla_overdue_open": 0,
     "update_pr_max_days": 30,
-    "update_prs_open": 1,
+    "update_prs_open": 0,
     "update_prs_stale": 0,
-    "update_prs_oldest_days": 0
+    "update_prs_oldest_days": null
   },
   "gate": {
     "limits": {
