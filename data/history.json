@@ -33,5 +33,18 @@
     "accepted_risks": 8,
     "sla_pct": 99,
     "update_prs": 0
+  },
+  {
+    "date": "2026-11-23",
+    "critical": 0,
+    "high": 1,
+    "medium": 1,
+    "low": 0,
+    "secrets": 0,
+    "coverage_pct": 100,
+    "actions_pinned_pct": 100,
+    "accepted_risks": 7,
+    "sla_pct": 99,
+    "update_prs": 0
   }
 ]

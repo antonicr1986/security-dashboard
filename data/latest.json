@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-11-16T15:47:56+00:00",
+  "generated_at": "2026-11-23T18:09:31+00:00",
   "repos": [
     {
       "name": "antonicr1986/FinanceTracker",
       "open": {
         "critical": 0,
         "high": 0,
-        "medium": 0,
+        "medium": 1,
         "low": 0
       },
       "secrets": 0,
@@ -36,7 +36,7 @@
       "name": "antonicr1986/financetracker-web",
       "open": {
         "critical": 0,
-        "high": 0,
+        "high": 1,
         "medium": 0,
         "low": 0
       },
@@ -56,13 +56,7 @@
         "workflows_total": 2,
         "without_permissions": []
       },
-      "accepted": [
-        {
-          "severity": "medium",
-          "reason": "not_used",
-          "justified": true
-        }
-      ],
+      "accepted": [],
       "update_prs": {
         "open": 0,
         "oldest_days": null,
@@ -149,8 +143,8 @@
       },
       "unavailable": [],
       "supply_chain": {
-        "actions_pinned": 10,
-        "actions_total": 10,
+        "actions_pinned": 11,
+        "actions_total": 11,
         "unpinned": [],
         "workflows_total": 3,
         "without_permissions": []
@@ -183,8 +177,8 @@
         "secret-scanning"
       ],
       "supply_chain": {
-        "actions_pinned": 9,
-        "actions_total": 9,
+        "actions_pinned": 12,
+        "actions_total": 12,
         "unpinned": [],
         "workflows_total": 1,
         "without_permissions": []
@@ -206,14 +200,14 @@
   "totals": {
     "open": {
       "critical": 0,
-      "high": 0,
-      "medium": 0,
+      "high": 1,
+      "medium": 1,
       "low": 0
     },
     "secrets": 0,
-    "mttr_days": 2.3,
-    "closed_alerts": 136,
-    "oldest_open_days": null,
+    "mttr_days": 2.4,
+    "closed_alerts": 141,
+    "oldest_open_days": 5,
     "control_coverage_pct": 100,
     "coverage_by_control": {
       "SAST": 100,
@@ -222,12 +216,12 @@
       "Contenedores/IaC": 100,
       "DAST": 100
     },
-    "actions_pinned": 68,
-    "actions_total": 68,
+    "actions_pinned": 72,
+    "actions_total": 72,
     "actions_pinned_pct": 100,
     "workflows_total": 13,
     "workflows_with_permissions_pct": 100,
-    "accepted_risks": 8,
+    "accepted_risks": 7,
     "accepted_without_comment": 0,
     "sla_days": {
       "critical": 7,
@@ -242,13 +236,13 @@
         "overdue_open": 0
       },
       "high": {
-        "within": 69,
-        "total": 69,
+        "within": 70,
+        "total": 70,
         "overdue_open": 0
       },
       "medium": {
-        "within": 52,
-        "total": 52,
+        "within": 56,
+        "total": 56,
         "overdue_open": 0
       },
       "low": {
@@ -257,8 +251,8 @@
         "overdue_open": 0
       }
     },
-    "sla_within": 135,
-    "sla_total": 136,
+    "sla_within": 140,
+    "sla_total": 141,
     "sla_pct": 99,
     "sla_overdue_open": 0,
     "update_pr_max_days": 30,
@@ -275,6 +269,8 @@
       "workflows_without_permissions": 0,
       "accepted_without_comment": 0
     },
-    "failures": []
+    "failures": [
+      "high: 1 abiertas (m\u00e1ximo 0)"
+    ]
   }
 }
